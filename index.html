@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Éditeur de Donjon — OSR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=Special+Elite&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --parchment:#ece0c3;
+    --parchment-dark:#d9c69a;
+    --parchment-shadow:#c1a978;
+    --ink:#241a12;
+    --ink-soft:#4a3928;
+    --leather:#3c2a1a;
+    --leather-dark:#1c1109;
+    --leather-light:#5a4128;
+    --red:#8c2f1f;
+    --red-dark:#5f1f14;
+    --red-light:#b04530;
+    --gold:#a6791e;
+    --gold-light:#d4ac4a;
+    --line:#b9a173;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    height:100dvh; overflow:hidden;
+    font-family:'EB Garamond', serif; color:var(--ink);
+    background:linear-gradient(160deg, var(--leather-dark), var(--leather) 45%, var(--leather-dark));
+  }
+  button{font:inherit;}
+
+  /* ====== disposition plein écran : barre d'outils + canvas ====== */
+  .mapper-app{ height:100dvh; display:flex; flex-direction:column; }
+  .mapper-toolbar{
+    flex:0 0 auto;
+    display:flex; align-items:center; justify-content:space-between; gap:14px;
+    padding:10px 16px;
+    background:
+      radial-gradient(ellipse at 20% 10%, rgba(255,250,230,0.5), transparent 55%),
+      linear-gradient(135deg, var(--parchment) 0%, var(--parchment-dark) 100%);
+    border-bottom:2px solid var(--gold);
+    box-shadow:0 4px 10px rgba(0,0,0,.25);
+    flex-wrap:wrap;
+  }
+  .mapper-toolbar .mapper-left{ display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+  .mapper-title{
+    font-family:'Cinzel', serif; font-weight:700; letter-spacing:.04em;
+    color:var(--red-dark); font-size:15px; white-space:nowrap;
+    display:inline-flex; align-items:center;
+  }
+  .mapper-tools{ display:flex; align-items:center; gap:6px; }
+  .mapper-tool{
+    width:38px; height:36px; border:1px solid var(--gold); border-radius:8px;
+    background:linear-gradient(135deg, var(--parchment), var(--parchment-dark));
+    font-size:17px; cursor:pointer; line-height:1; color:var(--ink);
+    display:inline-flex; align-items:center; justify-content:center;
+    transition:filter .15s, transform .1s;
+  }
+  .mapper-tool svg{ width:20px; height:20px; display:block; pointer-events:none; }
+  .mapper-tool:hover{ filter:brightness(1.06); transform:translateY(-1px); }
+  .mapper-tool.active{ background:linear-gradient(135deg, var(--gold-light), #d9bd72); box-shadow:inset 0 0 0 2px var(--red-dark); color:var(--leather-dark); }
+  #toolIcon{ width:auto; min-width:38px; padding:0 6px; gap:3px; }
+  #toolIcon .cur-emoji{ font-size:15px; line-height:1; }
+  #toolIcon .cur-emoji:empty{ display:none; }
+  .mapper-width{
+    display:flex; align-items:center; gap:8px;
+    background:linear-gradient(135deg, var(--parchment), var(--parchment-dark));
+    border:1px solid var(--gold); border-radius:8px;
+    padding:5px 10px; color:var(--ink-soft); font-size:13px;
+  }
+  .mapper-width label{ font-family:'Special Elite', monospace; white-space:nowrap; }
+  .mapper-width input[type=range]{ width:120px; accent-color:var(--red); cursor:pointer; }
+  .mapper-width #mapWidthDisplay{ min-width:26px; text-align:right; font-weight:700; color:var(--red-dark); }
+  .mapper-right{ display:flex; align-items:center; gap:8px; }
+  .mapper-btn{
+    border:1px solid var(--gold);
+    background:linear-gradient(135deg, var(--parchment), var(--parchment-dark));
+    color:var(--red-dark);
+    font-family:'Cinzel', serif; font-weight:700; font-size:14px;
+    height:36px; min-width:38px; padding:0 12px; border-radius:8px; cursor:pointer;
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    transition:filter .15s, transform .1s;
+  }
+  .mapper-btn svg{ width:18px; height:18px; display:block; pointer-events:none; }
+  .mapper-btn:hover{ filter:brightness(1.06); transform:translateY(-1px); }
+  .mapper-btn.danger{ color:var(--red); }
+  .mapper-btn.primary{ background:linear-gradient(135deg, var(--red), var(--red-dark)); color:var(--parchment); }
+
+  .mapper-canvas-wrap{
+    flex:1 1 auto; min-height:0; overflow:hidden; position:relative;
+    background:
+      linear-gradient(var(--parchment-shadow) 1px, transparent 1px),
+      linear-gradient(90deg, var(--parchment-shadow) 1px, transparent 1px),
+      linear-gradient(135deg, var(--parchment) 0%, var(--parchment-dark) 100%);
+    background-size:20px 20px, 20px 20px, 100% 100%;
+  }
+  .mapper-canvas-wrap{ scrollbar-width:none; -ms-overflow-style:none; }
+  .mapper-canvas-wrap::-webkit-scrollbar{ width:0; height:0; display:none; }
+  #dungeonCanvas{ display:block; background:transparent; cursor:crosshair; touch-action:none; }
+
+  /* menu des tampons d'icônes */
+  #mapIconMenu{
+    display:none; position:fixed; z-index:72;
+    width:min(340px, 92vw); max-height:70vh; overflow-y:auto;
+    background:linear-gradient(135deg, var(--parchment), var(--parchment-dark));
+    border:2px solid var(--gold); border-radius:12px; padding:8px 10px;
+    box-shadow:0 18px 44px rgba(0,0,0,.5);
+  }
+  #mapIconMenu.show{ display:block; }
+  #mapIconMenu .cat-title{
+    font-family:'Cinzel', serif; font-weight:700; font-size:12px; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--red-dark); margin:8px 2px 5px; padding-bottom:3px; border-bottom:1px solid var(--gold);
+  }
+  #mapIconMenu .cat-title:first-child{ margin-top:2px; }
+  #mapIconMenu .cat-grid{ display:grid; grid-template-columns:repeat(6, 1fr); gap:5px; margin-bottom:2px; }
+  /* barre de défilement discrète au thème */
+  #mapIconMenu{ scrollbar-width:thin; scrollbar-color:var(--gold) transparent; }
+  #mapIconMenu::-webkit-scrollbar{ width:8px; }
+  #mapIconMenu::-webkit-scrollbar-thumb{ background:var(--gold); border-radius:8px; }
+  .map-icon-btn{
+    width:44px; height:44px; border:1px solid var(--line); border-radius:8px;
+    background:rgba(255,252,240,.7); font-size:22px; cursor:pointer; line-height:1;
+    display:inline-flex; align-items:center; justify-content:center;
+    transition:filter .12s, transform .1s;
+  }
+  .map-icon-btn:hover{ filter:brightness(1.05); transform:scale(1.08); background:var(--gold-light); }
+
+  /* champ texte flottant */
+  .map-text-input{
+    position:absolute; z-index:5;
+    font-family:'Special Elite', monospace; font-size:18px; line-height:1.22; color:var(--ink);
+    background:rgba(255,252,240,.94); border:1px dashed var(--red);
+    border-radius:4px; padding:2px 4px; min-width:80px; outline:none;
+    resize:none; overflow:hidden; white-space:pre;
+  }
+
+  /* modale de confirmation */
+  #mapOverlay{ display:none; position:fixed; inset:0; z-index:70; background:rgba(20,12,6,.45); -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px); }
+  #mapModal{
+    display:none; position:fixed; z-index:71; top:50%; left:50%; transform:translate(-50%,-50%);
+    min-width:280px; max-width:90vw;
+    background:linear-gradient(135deg, var(--parchment), var(--parchment-dark));
+    border:2px solid var(--gold); border-radius:12px;
+    box-shadow:0 25px 60px rgba(0,0,0,.5);
+    padding:22px 24px; text-align:center; color:var(--ink);
+  }
+  #mapModal h2{ font-family:'Cinzel', serif; color:var(--red-dark); margin:0 0 10px; font-size:19px; }
+  #mapModal p{ margin:0 0 18px; color:var(--ink-soft); font-family:'EB Garamond', serif; font-size:15px; }
+  #mapModal .map-modal-actions{ display:flex; justify-content:center; gap:12px; }
+
+  @media (pointer:coarse){
+    .mapper-tool{ width:42px; height:40px; }
+    .map-icon-btn{ width:50px; height:50px; }
+  }
+  @media (max-width:640px){
+    .mapper-toolbar{ padding:8px 12px; gap:10px; }
+    .mapper-width input[type=range]{ width:92px; }
+    .mapper-title{ font-size:14px; }
+  }
+</style>
+</head>
+<body>
+  <div class="mapper-app">
+    <div class="mapper-toolbar">
+      <div class="mapper-left">
+        <span class="mapper-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;vertical-align:-3px;margin-right:5px"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg>Carte</span>
+        <div class="mapper-tools">
+          <button class="mapper-tool active" id="toolCorridor" data-tool="corridor" title="Couloir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l3.5-1L18 8.5 15.5 6 5 16.5 4 20z"/><path d="M14 7.5l2.5 2.5"/></svg></button>
+          <button class="mapper-tool" id="toolRiver" data-tool="river" title="Rivière (clic-glisser)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8q3-3 6 0t6 0 3-1.2"/><path d="M3 13q3-3 6 0t6 0 3-1.2"/><path d="M3 18q3-3 6 0t6 0 3-1.2"/></svg></button>
+          <button class="mapper-tool" id="toolFoliage" data-tool="foliage" title="Feuillage / forêt (clic-glisser)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.5" cy="9.5" r="3.2"/><circle cx="15" cy="9" r="3.2"/><circle cx="11.5" cy="13" r="3.6"/><path d="M11.5 16.5V21"/></svg></button>
+          <button class="mapper-tool" id="toolDoor" data-tool="door" title="Porte (clic-glisser-lâcher)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 21V4a1 1 0 0 1 1.2-1l8 1.6A1 1 0 0 1 16 5.6V21"/><path d="M4 21h16"/><circle cx="13" cy="12" r="1" fill="currentColor" stroke="none"/></svg></button>
+          <button class="mapper-tool" id="toolSecret" data-tool="secret" title="Porte secrète (clic-glisser-lâcher)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v18M18 3v18"/><rect x="9" y="6" width="6" height="12" stroke-dasharray="2.2 2.2"/><path d="M11 11.5a1 1 0 1 1 1.6.8c-.4.3-.6.5-.6 1.1" stroke-width="1.6"/><circle cx="12" cy="15.3" r=".55" fill="currentColor" stroke="none"/></svg></button>
+          <button class="mapper-tool" id="toolStairs" data-tool="stairs" title="Escalier (clic-glisser)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4v-4h4v-4h4v-4h4"/></svg></button>
+          <button class="mapper-tool" id="toolText" data-tool="text" title="Texte (cliquer pour écrire)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6V4h14v2M12 4v16M9 20h6"/></svg></button>
+          <button class="mapper-tool" id="toolArrow" data-tool="arrow" title="Flèche (clic pointe puis clic queue)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg></button>
+          <button class="mapper-tool" id="toolIcon" title="Icône (choisir puis placer)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s6.5-6 6.5-10.5A6.5 6.5 0 0 0 5.5 10.5C5.5 15 12 21 12 21z"/><circle cx="12" cy="10.3" r="2.3"/></svg><span class="cur-emoji"></span></button>
+          <button class="mapper-tool" id="toolEraser" data-tool="eraser" title="Gomme (cliquer un élément pour l'effacer)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.5l6.5-6.5 6 6-5.5 5.5H8z"/><path d="M8.5 19.5H19"/><path d="M9.5 9l6 6"/></svg></button>
+        </div>
+        <div class="mapper-width">
+          <label for="mapWidthPicker">Largeur</label>
+          <input type="range" id="mapWidthPicker" min="20" max="150" value="40">
+          <span id="mapWidthDisplay">40</span>
+        </div>
+      </div>
+      <div class="mapper-right">
+        <button class="mapper-btn" id="mapUndoBtn" title="Annuler (Ctrl+Z)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7L4 12l5 5"/><path d="M4 12h11a5 5 0 0 1 0 10h-2"/></svg></button>
+        <button class="mapper-btn danger" id="mapClearBtn" title="Tout effacer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg></button>
+        <button class="mapper-btn primary" id="mapSaveBtn" title="Exporter en PNG"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M8 11l4 4 4-4M5 20h14"/></svg>PNG</button>
+      </div>
+    </div>
+    <div class="mapper-canvas-wrap" id="mapperCanvasWrap">
+      <canvas id="dungeonCanvas"></canvas>
+    </div>
+  </div>
+  <div id="mapIconMenu">
+    <div class="cat-title">Mobilier</div>
+    <div class="cat-grid">
+      <button class="map-icon-btn" data-emoji="🗿" title="Mobilier">🗿</button>
+      <button class="map-icon-btn" data-emoji="⚰️" title="Mobilier">⚰️</button>
+      <button class="map-icon-btn" data-emoji="🎁" title="Mobilier">🎁</button>
+      <button class="map-icon-btn" data-emoji="🪤" title="Mobilier">🪤</button>
+      <button class="map-icon-btn" data-emoji="🚪" title="Mobilier">🚪</button>
+      <button class="map-icon-btn" data-emoji="🕯️" title="Mobilier">🕯️</button>
+      <button class="map-icon-btn" data-emoji="🛏️" title="Mobilier">🛏️</button>
+      <button class="map-icon-btn" data-emoji="📺" title="Mobilier">📺</button>
+      <button class="map-icon-btn" data-emoji="🛢️" title="Mobilier">🛢️</button>
+      <button class="map-icon-btn" data-emoji="🪜" title="Mobilier">🪜</button>
+      <button class="map-icon-btn" data-emoji="🌳" title="Mobilier">🌳</button>
+      <button class="map-icon-btn" data-emoji="🏺" title="Mobilier">🏺</button>
+    </div>
+    <div class="cat-title">Items</div>
+    <div class="cat-grid">
+      <button class="map-icon-btn" data-emoji="🗡️" title="Items">🗡️</button>
+      <button class="map-icon-btn" data-emoji="🔫" title="Items">🔫</button>
+      <button class="map-icon-btn" data-emoji="🛡️" title="Items">🛡️</button>
+      <button class="map-icon-btn" data-emoji="📚" title="Items">📚</button>
+      <button class="map-icon-btn" data-emoji="🗺️" title="Items">🗺️</button>
+      <button class="map-icon-btn" data-emoji="🔑" title="Items">🔑</button>
+      <button class="map-icon-btn" data-emoji="🪖" title="Items">🪖</button>
+      <button class="map-icon-btn" data-emoji="💽" title="Items">💽</button>
+      <button class="map-icon-btn" data-emoji="🏹" title="Items">🏹</button>
+      <button class="map-icon-btn" data-emoji="🪙" title="Items">🪙</button>
+      <button class="map-icon-btn" data-emoji="📜" title="Items">📜</button>
+      <button class="map-icon-btn" data-emoji="🔨" title="Items">🔨</button>
+    </div>
+    <div class="cat-title">Nourriture</div>
+    <div class="cat-grid">
+      <button class="map-icon-btn" data-emoji="🍽️" title="Nourriture">🍽️</button>
+      <button class="map-icon-btn" data-emoji="🍕" title="Nourriture">🍕</button>
+      <button class="map-icon-btn" data-emoji="🍎" title="Nourriture">🍎</button>
+      <button class="map-icon-btn" data-emoji="🥩" title="Nourriture">🥩</button>
+      <button class="map-icon-btn" data-emoji="🥦" title="Nourriture">🥦</button>
+      <button class="map-icon-btn" data-emoji="🥑" title="Nourriture">🥑</button>
+      <button class="map-icon-btn" data-emoji="🌸" title="Nourriture">🌸</button>
+      <button class="map-icon-btn" data-emoji="🧀" title="Nourriture">🧀</button>
+      <button class="map-icon-btn" data-emoji="🍷" title="Nourriture">🍷</button>
+      <button class="map-icon-btn" data-emoji="💊" title="Nourriture">💊</button>
+      <button class="map-icon-btn" data-emoji="🍄" title="Nourriture">🍄</button>
+      <button class="map-icon-btn" data-emoji="💩" title="Nourriture">💩</button>
+    </div>
+    <div class="cat-title">PNJ</div>
+    <div class="cat-grid">
+      <button class="map-icon-btn" data-emoji="👨‍💼" title="PNJ">👨‍💼</button>
+      <button class="map-icon-btn" data-emoji="👨‍🍳" title="PNJ">👨‍🍳</button>
+      <button class="map-icon-btn" data-emoji="🦹🏼" title="PNJ">🦹🏼</button>
+      <button class="map-icon-btn" data-emoji="🧙‍♂️" title="PNJ">🧙‍♂️</button>
+      <button class="map-icon-btn" data-emoji="🧝‍♂️" title="PNJ">🧝‍♂️</button>
+      <button class="map-icon-btn" data-emoji="🕵️‍♂️" title="PNJ">🕵️‍♂️</button>
+      <button class="map-icon-btn" data-emoji="🧞" title="PNJ">🧞</button>
+      <button class="map-icon-btn" data-emoji="🧑🏼‍🎨" title="PNJ">🧑🏼‍🎨</button>
+      <button class="map-icon-btn" data-emoji="🤹🏽" title="PNJ">🤹🏽</button>
+      <button class="map-icon-btn" data-emoji="👸" title="PNJ">👸</button>
+      <button class="map-icon-btn" data-emoji="👩🏻‍🔬" title="PNJ">👩🏻‍🔬</button>
+      <button class="map-icon-btn" data-emoji="👩🏽‍⚖️" title="PNJ">👩🏽‍⚖️</button>
+    </div>
+    <div class="cat-title">Pin's</div>
+    <div class="cat-grid">
+      <button class="map-icon-btn" data-emoji="💥" title="Pin's">💥</button>
+      <button class="map-icon-btn" data-emoji="🔥" title="Pin's">🔥</button>
+      <button class="map-icon-btn" data-emoji="📍" title="Pin's">📍</button>
+      <button class="map-icon-btn" data-emoji="⚠️" title="Pin's">⚠️</button>
+      <button class="map-icon-btn" data-emoji="☢️" title="Pin's">☢️</button>
+      <button class="map-icon-btn" data-emoji="⚓" title="Pin's">⚓</button>
+      <button class="map-icon-btn" data-emoji="💀" title="Pin's">💀</button>
+      <button class="map-icon-btn" data-emoji="🚨" title="Pin's">🚨</button>
+      <button class="map-icon-btn" data-emoji="🔎" title="Pin's">🔎</button>
+      <button class="map-icon-btn" data-emoji="❓" title="Pin's">❓</button>
+      <button class="map-icon-btn" data-emoji="⛔" title="Pin's">⛔</button>
+      <button class="map-icon-btn" data-emoji="⚡" title="Pin's">⚡</button>
+    </div>
+    <div class="cat-title">Animaux</div>
+    <div class="cat-grid">
+      <button class="map-icon-btn" data-emoji="🐀" title="Animaux">🐀</button>
+      <button class="map-icon-btn" data-emoji="🦂" title="Animaux">🦂</button>
+      <button class="map-icon-btn" data-emoji="🐍" title="Animaux">🐍</button>
+      <button class="map-icon-btn" data-emoji="🐊" title="Animaux">🐊</button>
+      <button class="map-icon-btn" data-emoji="🐎" title="Animaux">🐎</button>
+      <button class="map-icon-btn" data-emoji="🦤" title="Animaux">🦤</button>
+      <button class="map-icon-btn" data-emoji="🦍" title="Animaux">🦍</button>
+      <button class="map-icon-btn" data-emoji="🐕" title="Animaux">🐕</button>
+      <button class="map-icon-btn" data-emoji="🐆" title="Animaux">🐆</button>
+      <button class="map-icon-btn" data-emoji="🦅" title="Animaux">🦅</button>
+      <button class="map-icon-btn" data-emoji="🪳" title="Animaux">🪳</button>
+      <button class="map-icon-btn" data-emoji="🕷️" title="Animaux">🕷️</button>
+    </div>
+    <div class="cat-title">Monstres</div>
+    <div class="cat-grid">
+      <button class="map-icon-btn" data-emoji="👻" title="Monstres">👻</button>
+      <button class="map-icon-btn" data-emoji="🦇" title="Monstres">🦇</button>
+      <button class="map-icon-btn" data-emoji="🐉" title="Monstres">🐉</button>
+      <button class="map-icon-btn" data-emoji="🧌" title="Monstres">🧌</button>
+      <button class="map-icon-btn" data-emoji="🧟‍♀️" title="Monstres">🧟‍♀️</button>
+      <button class="map-icon-btn" data-emoji="🐦‍🔥" title="Monstres">🐦‍🔥</button>
+      <button class="map-icon-btn" data-emoji="🧚" title="Monstres">🧚</button>
+      <button class="map-icon-btn" data-emoji="🦖" title="Monstres">🦖</button>
+      <button class="map-icon-btn" data-emoji="🧜" title="Monstres">🧜</button>
+      <button class="map-icon-btn" data-emoji="🦑" title="Monstres">🦑</button>
+      <button class="map-icon-btn" data-emoji="👽" title="Monstres">👽</button>
+      <button class="map-icon-btn" data-emoji="🦄" title="Monstres">🦄</button>
+    </div>
+  </div>
+  <div id="mapOverlay"></div>
+  <div id="mapModal">
+    <h2 id="mapModalTitle">Attention</h2>
+    <p id="mapModalText">Etes-vous sur ?</p>
+    <div class="map-modal-actions">
+      <button class="mapper-btn" id="mapModalCancel">Annuler</button>
+      <button class="mapper-btn primary" id="mapModalOk">Confirmer</button>
+    </div>
+
+<script>
+/* ============ DUNGEON MAPPER — moteur (objets + caméra, canvas infini) ============ */
+(function(){
+  "use strict";
+  var canvas = document.getElementById('dungeonCanvas'); if(!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var container = document.getElementById('mapperCanvasWrap');
+  var panel = document.querySelector('.mapper-app');
+
+  var widthPicker  = document.getElementById('mapWidthPicker');
+  var widthDisplay = document.getElementById('mapWidthDisplay');
+  var clearBtn = document.getElementById('mapClearBtn');
+  var undoBtn  = document.getElementById('mapUndoBtn');
+  var saveBtn  = document.getElementById('mapSaveBtn');
+  var msgBox = document.getElementById('mapModal');
+  var msgOverlay = document.getElementById('mapOverlay');
+  var msgTitle = document.getElementById('mapModalTitle');
+  var msgText  = document.getElementById('mapModalText');
+  var msgBtnOk = document.getElementById('mapModalOk');
+  var msgBtnCancel = document.getElementById('mapModalCancel');
+  var toolCorridorBtn = document.getElementById('toolCorridor');
+  var toolRiverBtn = document.getElementById('toolRiver');
+  var toolFoliageBtn = document.getElementById('toolFoliage');
+  var toolDoorBtn = document.getElementById('toolDoor');
+  var toolSecretBtn = document.getElementById('toolSecret');
+  var toolStairsBtn = document.getElementById('toolStairs');
+  var toolTextBtn = document.getElementById('toolText');
+  var toolArrowBtn = document.getElementById('toolArrow');
+  var toolIconBtn = document.getElementById('toolIcon');
+  var toolEraserBtn = document.getElementById('toolEraser');
+  var iconMenu = document.getElementById('mapIconMenu');
+
+  var cssVar = function(n,f){ var v=getComputedStyle(document.documentElement).getPropertyValue(n).trim(); return v||f; };
+  var PARCHMENT_COLOR = cssVar('--parchment','#ece0c3');
+  var INK_COLOR = cssVar('--ink','#241a12');
+  var INK_THICKNESS = 4;
+  var WATER_FILL = '#c7d7dd';   /* fond opaque (masque la hachure sous l'eau) */
+  var WAVE_COLOR = '#4f7286';   /* trait des vaguelettes */
+  var FOLIAGE_FILL = '#9cb37e'; /* vert sourd de la canopée */
+  var FOLIAGE_DARK = '#5f7346'; /* touffes/points plus foncés */
+  var HATCH_BAND = 18;     // largeur de la bordure hachurée (unités monde)
+
+  var state = { tool:'corridor', icon:'\uD83D\uDC80', corridorWidth:40 };  // 💀 par défaut
+  var objects = [];
+  var view = { scale:1, ox:0, oy:0 };
+  var initialized = false;
+
+  var scene = document.createElement('canvas');
+  var sctx = scene.getContext('2d');
+  var sceneOx = 0, sceneOy = 0;
+
+  /* ---- motif de hachure uniforme (lignes diagonales régulières) ---- */
+  var hatchTile = document.createElement('canvas');
+  (function(){
+    var TS=7; hatchTile.width=TS; hatchTile.height=TS;
+    var tc=hatchTile.getContext('2d');
+    tc.strokeStyle=INK_COLOR; tc.lineWidth=1; tc.lineCap='square';
+    tc.beginPath(); tc.moveTo(-1,TS+1); tc.lineTo(TS+1,-1); tc.stroke();   // diagonale 45°, tuilée = lignes parallèles
+  })();
+  var waveTile = document.createElement('canvas');
+  (function(){
+    var W=16, H=8; waveTile.width=W; waveTile.height=H;
+    var wc=waveTile.getContext('2d');
+    wc.strokeStyle=WAVE_COLOR; wc.lineWidth=1.1; wc.lineCap='round';
+    wc.beginPath();
+    for(var x=0;x<=W;x++){ var y=H/2+Math.sin(x/W*Math.PI*2)*2; if(x===0) wc.moveTo(x,y); else wc.lineTo(x,y); }
+    wc.stroke();
+  })();
+
+  /* ---- géométrie ---- */
+  function roundRectPath(c,x,y,w,h,r){
+    r=Math.min(r, w/2, h/2);
+    c.beginPath();
+    c.moveTo(x+r,y);
+    c.arcTo(x+w,y,   x+w,y+h, r);
+    c.arcTo(x+w,y+h, x,  y+h, r);
+    c.arcTo(x,  y+h, x,  y,   r);
+    c.arcTo(x,  y,   x+w,y,   r);
+    c.closePath();
+  }
+
+  /* ---- COULOIR : passes séparées ---- */
+  function corridorPath(c,pts){
+    c.beginPath(); c.moveTo(pts[0].x,pts[0].y);
+    for(var i=1;i<pts.length;i++){ c.lineTo(pts[i].x,pts[i].y); }
+  }
+  function strokeHalo(c,o,pattern){    // bordure hachurée uniforme, sous les murs
+    if(!o.points||o.points.length<2) return;
+    c.lineCap='round'; c.lineJoin='round';
+    corridorPath(c,o.points);
+    c.lineWidth=o.width+INK_THICKNESS*2+HATCH_BAND*2; c.strokeStyle=pattern; c.stroke();
+  }
+  function strokeWalls(c,o){
+    if(!o.points||o.points.length<2) return;
+    c.lineCap='round'; c.lineJoin='round';
+    corridorPath(c,o.points);
+    c.lineWidth=o.width+INK_THICKNESS*2; c.strokeStyle=INK_COLOR; c.stroke();
+  }
+  function strokeFloor(c,o){
+    if(!o.points||o.points.length<2) return;
+    c.lineCap='round'; c.lineJoin='round';
+    corridorPath(c,o.points);
+    c.lineWidth=o.width; c.strokeStyle=PARCHMENT_COLOR; c.stroke();
+  }
+  // aperçu couloir (pendant le tracé)
+  function paintCorridorPreview(c,o){
+    var hp=c.createPattern(hatchTile,'repeat');
+    c.globalCompositeOperation='source-over';
+    if(hp) strokeHalo(c,o,hp);
+    strokeWalls(c,o);
+    strokeFloor(c,o);
+  }
+
+  /* ---- PORTE ---- */
+  function paintDoor(c,obj){
+    var a=obj.a, b=obj.b;
+    var dx=b.x-a.x, dy=b.y-a.y, len=Math.hypot(dx,dy);
+    if(len<6){ var cx=a.x, cy=a.y; a={x:cx-22,y:cy}; b={x:cx+22,y:cy}; dx=44; dy=0; len=44; }
+    var ang=Math.atan2(dy,dx), depth=16;
+    c.save();
+    c.translate((a.x+b.x)/2,(a.y+b.y)/2); c.rotate(ang);
+    c.globalCompositeOperation='source-over';
+    c.fillStyle=PARCHMENT_COLOR; c.fillRect(-len/2-3,-depth/2-3,len+6,depth+6);
+    c.strokeStyle=INK_COLOR; c.lineJoin='miter'; c.lineCap='butt'; c.lineWidth=3;
+    c.strokeRect(-len/2,-depth/2,len,depth);
+    c.beginPath();
+    c.moveTo(-len/2,-depth); c.lineTo(-len/2,depth);
+    c.moveTo( len/2,-depth); c.lineTo( len/2,depth);
+    c.stroke();
+    c.restore();
+  }
+
+  /* ---- PORTE SECRÈTE : comme une porte mais jambages pointillés + « S » ---- */
+  function paintSecret(c,obj){
+    var a=obj.a, b=obj.b;
+    var dx=b.x-a.x, dy=b.y-a.y, len=Math.hypot(dx,dy);
+    if(len<6){ var cx=a.x, cy=a.y; a={x:cx-22,y:cy}; b={x:cx+22,y:cy}; dx=44; dy=0; len=44; }
+    var ang=Math.atan2(dy,dx), depth=16;
+    c.save();
+    c.translate((a.x+b.x)/2,(a.y+b.y)/2); c.rotate(ang);
+    c.globalCompositeOperation='source-over';
+    c.fillStyle=PARCHMENT_COLOR; c.fillRect(-len/2-3,-depth/2-3,len+6,depth+6);
+    c.strokeStyle=INK_COLOR; c.lineJoin='miter'; c.lineCap='butt'; c.lineWidth=3;
+    c.setLineDash([5,4]);                      // contour du vantail en pointillés = secret
+    c.strokeRect(-len/2,-depth/2,len,depth);
+    c.setLineDash([]);
+    c.beginPath();                             // jambages pleins
+    c.moveTo(-len/2,-depth); c.lineTo(-len/2,depth);
+    c.moveTo( len/2,-depth); c.lineTo( len/2,depth);
+    c.stroke();
+    c.fillStyle=INK_COLOR; c.textAlign='center'; c.textBaseline='middle';
+    c.font='bold 13px "Cinzel", serif';
+    c.fillText('S', 0, 0);                     // marque « S » au centre
+    c.restore();
+  }
+
+  /* ---- ESCALIER : rectangle + marches perpendiculaires au sens du tracé ---- */
+  function paintStairs(c,obj){
+    var a=obj.a, b=obj.b;
+    var dx=b.x-a.x, dy=b.y-a.y, len=Math.hypot(dx,dy);
+    if(len<6){ len=48; a={x:obj.a.x-24,y:obj.a.y}; b={x:obj.a.x+24,y:obj.a.y}; dx=48; dy=0; }
+    var ang=Math.atan2(dy,dx);
+    var w=Math.max(16, (obj.width||40)*0.7);   // largeur de l'escalier (perpendiculaire)
+    c.save();
+    c.translate((a.x+b.x)/2,(a.y+b.y)/2); c.rotate(ang);
+    c.globalCompositeOperation='source-over';
+    c.fillStyle=PARCHMENT_COLOR; c.fillRect(-len/2,-w/2,len,w);   // sol
+    c.strokeStyle=INK_COLOR; c.lineJoin='miter'; c.lineCap='butt'; c.lineWidth=3;
+    c.strokeRect(-len/2,-w/2,len,w);                              // contour
+    // marches : traits transversaux régulièrement espacés, resserrés vers le "haut" (b)
+    var step=12;
+    c.lineWidth=2;
+    c.beginPath();
+    for(var x=-len/2+step; x<len/2-1; x+=step){
+      c.moveTo(x,-w/2); c.lineTo(x,w/2);
+    }
+    c.stroke();
+    // flèche de montée le long de l'axe (indique le sens vers b)
+    c.strokeStyle=INK_COLOR; c.lineWidth=2; c.lineCap='round'; c.lineJoin='round';
+    c.beginPath(); c.moveTo(-len/2+6,0); c.lineTo(len/2-8,0); c.stroke();
+    c.beginPath();
+    c.moveTo(len/2-8,0); c.lineTo(len/2-16,-5); c.moveTo(len/2-8,0); c.lineTo(len/2-16,5);
+    c.stroke();
+    c.restore();
+  }
+
+  /* ---- ICÔNE ---- */
+  function paintIcon(c,obj){
+    c.save(); c.globalCompositeOperation='source-over';
+    c.font='30px serif'; c.textAlign='center'; c.textBaseline='middle';
+    c.fillText(obj.emoji, obj.x, obj.y); c.restore();
+  }
+
+  /* ---- FLÈCHE ---- */
+  function paintArrow(c,obj){
+    var tip=obj.tip, tail=obj.tail;
+    c.save(); c.globalCompositeOperation='source-over';
+    c.strokeStyle=INK_COLOR; c.fillStyle=INK_COLOR; c.lineCap='round'; c.lineJoin='round'; c.lineWidth=3;
+    c.beginPath(); c.moveTo(tail.x,tail.y); c.lineTo(tip.x,tip.y); c.stroke();
+    var ang=Math.atan2(tip.y-tail.y, tip.x-tail.x), hl=16, ha=Math.PI/7;
+    c.beginPath();
+    c.moveTo(tip.x, tip.y);
+    c.lineTo(tip.x-hl*Math.cos(ang-ha), tip.y-hl*Math.sin(ang-ha));
+    c.lineTo(tip.x-hl*Math.cos(ang+ha), tip.y-hl*Math.sin(ang+ha));
+    c.closePath(); c.fill();
+    c.restore();
+  }
+
+  /* ---- TEXTE : toujours dans un cadre arrondi, au-dessus de tout ---- */
+  function paintText(c,obj){
+    c.save(); c.globalCompositeOperation='source-over';
+    c.font='18px "Special Elite", monospace';
+    c.textAlign='left'; c.textBaseline='top';
+    var padX=9, padY=6, r=9, lh=22;
+    var lines=String(obj.text).split('\n');
+    var tw=0;
+    for(var i=0;i<lines.length;i++){ var w=c.measureText(lines[i]).width; if(w>tw) tw=w; }
+    var bw=tw+padX*2, bh=lines.length*lh+padY*2;
+    roundRectPath(c, obj.x, obj.y, bw, bh, r);
+    c.fillStyle=PARCHMENT_COLOR; c.fill();
+    c.lineWidth=2; c.strokeStyle=INK_COLOR; c.stroke();
+    c.fillStyle=INK_COLOR;
+    for(var j=0;j<lines.length;j++){ c.fillText(lines[j], obj.x+padX, obj.y+padY+j*lh); }
+    c.restore();
+  }
+
+  /* ---- aperçu d'un objet actif ---- */
+  /* ---- FEUILLAGE : touffes rondes qui se chevauchent (forêt OSR) ---- */
+  function foliageClumps(pts, w){
+    // place des centres régulièrement le long de la polyligne, pas <= rayon*0.55
+    var r=w/2, step=Math.max(6, r*0.55), out=[], i, acc=0;
+    if(!pts.length) return out;
+    out.push({x:pts[0].x, y:pts[0].y});
+    for(i=1;i<pts.length;i++){
+      var a=pts[i-1], b=pts[i], dx=b.x-a.x, dy=b.y-a.y, seg=Math.hypot(dx,dy);
+      if(seg<1e-6) continue;
+      var d=step-acc;
+      while(d<seg){ out.push({x:a.x+dx*(d/seg), y:a.y+dy*(d/seg)}); d+=step; }
+      acc=(seg-(d-step));
+    }
+    var last=pts[pts.length-1];
+    if(Math.hypot(last.x-out[out.length-1].x, last.y-out[out.length-1].y) > step*0.5) out.push({x:last.x, y:last.y});
+    return out;
+  }
+  // pseudo-hasard DÉTERMINISTE à partir des coordonnées (stable entre rendus et après save/load)
+  function seeded(x,y){ var n=Math.sin(x*12.9898 + y*78.233)*43758.5453; return n-Math.floor(n); }
+  // touffe IRRÉGULIÈRE en lobes de feuilles : rayon modulé par angle (bosses pointues) + jitter déterministe
+  function leafBlobPath(c, cx, cy, base){
+    var phase = seeded(cx, cy)*Math.PI*2;
+    var lobes = 7 + Math.floor(seeded(cx*0.7, cy*1.3)*4);   // 7..10 lobes
+    var steps = lobes*5;                                     // assez de points pour des pointes nettes
+    for(var s=0;s<=steps;s++){
+      var t = s/steps * Math.PI*2;
+      // bosses principales (lobes) + harmonique + petit bruit positionnel = bord "feuillu"
+      var wob = 0.20*Math.sin(t*lobes + phase)
+              + 0.09*Math.sin(t*(lobes*2+1) - phase*1.7)
+              + (seeded(cx + Math.cos(t)*9.1, cy + Math.sin(t)*9.1) - 0.5)*0.16;
+      var rr = base*(1 + wob);
+      var x = cx + Math.cos(t)*rr, y = cy + Math.sin(t)*rr;
+      if(s===0) c.moveTo(x,y); else c.lineTo(x,y);
+    }
+    c.closePath();
+  }
+  function paintFoliage(c,o){
+    var pts=o.points; if(!pts||!pts.length) return;
+    var w=o.width, r=w/2;
+    var clumps=foliageClumps(pts, w);
+    function radAt(x,y){ return r*(0.70 + seeded(x,y)*0.28); }
+    c.save(); c.globalCompositeOperation='source-over'; c.lineJoin='round'; c.lineCap='round';
+    // 1) contour encre de TOUTES les touffes (lobes de feuilles ; sera en partie recouvert)
+    c.strokeStyle=INK_COLOR; c.lineWidth=3;
+    for(var i=0;i<clumps.length;i++){ var a=clumps[i]; c.beginPath(); leafBlobPath(c, a.x, a.y, radAt(a.x,a.y)); c.stroke(); }
+    // 2) remplissage vert par-dessus → ne laisse que le bord EXTÉRIEUR festonné (arcs internes couverts)
+    c.fillStyle=FOLIAGE_FILL;
+    for(var j=0;j<clumps.length;j++){ var b=clumps[j]; c.beginPath(); leafBlobPath(c, b.x, b.y, radAt(b.x,b.y)); c.fill(); }
+    // 3) petites nervures/points plus foncés pour la texture du feuillage
+    c.fillStyle=FOLIAGE_DARK;
+    for(var k=0;k<clumps.length;k++){ var p=clumps[k], s=seeded(p.x*1.7, p.y*0.9); if(s>0.45){ var ox=(seeded(p.x,p.y)-0.5)*r*0.7, oy=(seeded(p.y,p.x)-0.5)*r*0.7; c.beginPath(); c.arc(p.x+ox, p.y+oy, Math.max(1.3, r*0.08), 0, Math.PI*2); c.fill(); } }
+    c.restore();
+  }
+
+  /* ---- RIVIÈRE : berges encre + eau + reflet, sans hachures ---- */
+  function paintRiver(c,o){
+    var pts=o.points; if(!pts||pts.length<2) return;
+    var w=o.width;
+    c.save(); c.lineCap='round'; c.lineJoin='round'; c.globalCompositeOperation='source-over';
+    corridorPath(c,pts);
+    c.lineWidth=w+3; c.strokeStyle=INK_COLOR; c.stroke();          // berges encre
+    c.lineWidth=w;   c.strokeStyle=WATER_FILL; c.stroke();         // fond opaque (masque la hachure)
+    var wp=c.createPattern(waveTile,'repeat');
+    if(wp){ c.lineWidth=w; c.strokeStyle=wp; c.stroke(); }         // vaguelettes en trame
+    c.restore();
+  }
+  function paintActive(c,obj){
+    if(obj.type==='corridor') paintCorridorPreview(c,obj);
+    else if(obj.type==='river') paintRiver(c,obj);
+    else if(obj.type==='foliage') paintFoliage(c,obj);
+    else if(obj.type==='door') paintDoor(c,obj);
+    else if(obj.type==='secret') paintSecret(c,obj);
+    else if(obj.type==='stairs') paintStairs(c,obj);
+    else if(obj.type==='arrow') paintArrow(c,obj);
+  }
+
+  /* ---- rendu de la scène en COUCHES globales ---- */
+  function corridorHaloPass(c){
+    var i,o; var hp=c.createPattern(hatchTile,'repeat');
+    c.globalCompositeOperation='source-over';
+    if(hp){ for(i=0;i<objects.length;i++){ o=objects[i]; if(o.type==='corridor') strokeHalo(c,o,hp); } }
+  }
+  function corridorBodyPass(c){
+    var i,o; c.globalCompositeOperation='source-over';
+    for(i=0;i<objects.length;i++){ o=objects[i]; if(o.type==='corridor') strokeWalls(c,o); }
+    for(i=0;i<objects.length;i++){ o=objects[i]; if(o.type==='corridor') strokeFloor(c,o); }
+  }
+  function renderScene(){
+    if(scene.width!==canvas.width || scene.height!==canvas.height){ scene.width=canvas.width; scene.height=canvas.height; }
+    sctx.setTransform(1,0,0,1,0,0);
+    sctx.clearRect(0,0,scene.width,scene.height);
+    sctx.setTransform(view.scale,0,0,view.scale,view.ox,view.oy);
+    var i,o;
+    corridorHaloPass(sctx);
+    for(i=0;i<objects.length;i++){ o=objects[i]; if(o.type==='river') paintRiver(sctx,o); }
+    corridorBodyPass(sctx);
+    for(i=0;i<objects.length;i++){ o=objects[i]; if(o.type==='foliage') paintFoliage(sctx,o); }
+    for(i=0;i<objects.length;i++){ o=objects[i]; if(o.type==='stairs') paintStairs(sctx,o); }
+    for(i=0;i<objects.length;i++){ o=objects[i]; if(o.type==='door') paintDoor(sctx,o); }
+    for(i=0;i<objects.length;i++){ o=objects[i]; if(o.type==='secret') paintSecret(sctx,o); }
+    for(i=0;i<objects.length;i++){ o=objects[i]; if(o.type==='icon') paintIcon(sctx,o); }
+    for(i=0;i<objects.length;i++){ o=objects[i]; if(o.type==='arrow') paintArrow(sctx,o); }
+    for(i=0;i<objects.length;i++){ o=objects[i]; if(o.type==='text') paintText(sctx,o); }
+    sctx.setTransform(1,0,0,1,0,0);
+    sceneOx=view.ox; sceneOy=view.oy;
+  }
+  function paint(active){
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.drawImage(scene, view.ox-sceneOx, view.oy-sceneOy);
+    if(active){
+      ctx.setTransform(view.scale,0,0,view.scale,view.ox,view.oy);
+      paintActive(ctx, active);
+      ctx.setTransform(1,0,0,1,0,0);
+    }
+  }
+
+  /* ---- coordonnées ---- */
+  function getScreenPos(e){
+    var rect=canvas.getBoundingClientRect();
+    var cx,cy;
+    if(e.touches && e.touches.length){ cx=e.touches[0].clientX; cy=e.touches[0].clientY; }
+    else if(e.changedTouches && e.changedTouches.length){ cx=e.changedTouches[0].clientX; cy=e.changedTouches[0].clientY; }
+    else { cx=e.clientX; cy=e.clientY; }
+    return { x:(cx-rect.left)*(canvas.width/rect.width), y:(cy-rect.top)*(canvas.height/rect.height) };
+  }
+  function toWorld(s){ return { x:(s.x-view.ox)/view.scale, y:(s.y-view.oy)/view.scale }; }
+  function cursorFor(t){ return t==='text' ? 'text' : t==='icon' ? 'copy' : t==='eraser' ? 'pointer' : 'crosshair'; }
+
+  /* ---- gomme : distance point→objet, on efface l'objet le plus proche sous le clic ---- */
+  function distToSeg(p,a,b){
+    var vx=b.x-a.x, vy=b.y-a.y, wx=p.x-a.x, wy=p.y-a.y;
+    var c1=vx*wx+vy*wy; if(c1<=0) return Math.hypot(p.x-a.x,p.y-a.y);
+    var c2=vx*vx+vy*vy; if(c2<=c1) return Math.hypot(p.x-b.x,p.y-b.y);
+    var t=c1/c2; return Math.hypot(p.x-(a.x+vx*t), p.y-(a.y+vy*t));
+  }
+  function distToPolyline(p,pts){
+    var d=Infinity; for(var i=0;i<pts.length-1;i++){ d=Math.min(d, distToSeg(p,pts[i],pts[i+1])); }
+    if(pts.length===1) d=Math.hypot(p.x-pts[0].x,p.y-pts[0].y);
+    return d;
+  }
+  function hitObject(o,p){
+    if(o.type==='corridor' || o.type==='river' || o.type==='foliage'){ return distToPolyline(p,o.points) <= (o.width/2 + 8); }
+    if(o.type==='door' || o.type==='secret' || o.type==='stairs'){ return distToSeg(p,o.a,o.b) <= ((o.width? o.width/2:0) + 20); }
+    if(o.type==='arrow'){ return distToSeg(p,o.tip,o.tail) <= 12; }
+    if(o.type==='icon'){ return Math.hypot(p.x-o.x, p.y-o.y) <= 22; }
+    if(o.type==='text'){
+      var lines=String(o.text).split('\n'); var ml=0; for(var t=0;t<lines.length;t++){ if(lines[t].length>ml) ml=lines[t].length; }
+      var bw=ml*11+24, bh=lines.length*22+16;
+      return p.x>=o.x-4 && p.x<=o.x+bw+4 && p.y>=o.y-4 && p.y<=o.y+bh+4;
+    }
+    return false;
+  }
+  function eraseAt(p){
+    for(var i=objects.length-1;i>=0;i--){          // du plus récent (au-dessus) au plus ancien
+      if(hitObject(objects[i],p)){ objects.splice(i,1); saveMap(); renderScene(); paint(); return true; }
+    }
+    return false;
+  }
+
+  /* ---- fit + persistance + historique ---- */
+  function fitCanvas(){
+    var w=Math.max(1,container.clientWidth), h=Math.max(1,container.clientHeight);
+    if(canvas.width!==w||canvas.height!==h){ canvas.width=w; canvas.height=h; }
+    renderScene(); paint();
+  }
+  var MAP_LS_KEY='dungeon-editor-map';
+  function saveMap(){ try{ localStorage.setItem(MAP_LS_KEY, JSON.stringify({v:1, objects:objects, view:view})); }catch(e){} }
+  function loadMap(){ try{ var raw=localStorage.getItem(MAP_LS_KEY); if(!raw) return; var d=JSON.parse(raw); if(d && d.objects){ objects=d.objects; if(d.view && typeof d.view.scale==='number'){ view.scale=d.view.scale; view.ox=d.view.ox; view.oy=d.view.oy; } } }catch(e){} }
+  function commit(obj){ objects.push(obj); saveMap(); renderScene(); paint(); }
+  function undo(){ if(objects.length){ objects.pop(); saveMap(); renderScene(); paint(); } }
+  function clearAll(){ objects.length=0; arrowTip=null; saveMap(); renderScene(); paint(); }
+
+  /* ---- modale ---- */
+  var confirmCb=null;
+  function showMessage(title,text,isConfirm,onConfirm){
+    msgTitle.textContent=title; msgText.textContent=text;
+    msgOverlay.style.display='block'; msgBox.style.display='block';
+    if(isConfirm){ msgBtnCancel.style.display='inline-flex'; confirmCb=onConfirm||null; }
+    else { msgBtnCancel.style.display='none'; confirmCb=null; }
+  }
+  function hideMessage(){ msgOverlay.style.display='none'; msgBox.style.display='none'; }
+  msgBtnOk.addEventListener('click', function(){ hideMessage(); if(confirmCb) confirmCb(); });
+  msgBtnCancel.addEventListener('click', hideMessage);
+  msgOverlay.addEventListener('click', hideMessage);
+
+  /* ---- texte : champ flottant ---- */
+  var activeTextInput=null;
+  function removeTextInput(){ if(activeTextInput && activeTextInput.parentNode){ activeTextInput.parentNode.removeChild(activeTextInput); } activeTextInput=null; }
+  function openTextInput(e, wp){
+    removeTextInput();
+    var s=getScreenPos(e);
+    var inp=document.createElement('textarea');
+    inp.className='map-text-input'; inp.rows=1; inp.wrap='off';
+    inp.style.left=s.x+'px'; inp.style.top=s.y+'px';
+    inp.style.fontSize=(18*view.scale)+'px';
+    container.appendChild(inp); activeTextInput=inp;
+    function grow(){ inp.style.height='auto'; inp.style.height=inp.scrollHeight+'px'; inp.style.width='auto'; inp.style.width=(inp.scrollWidth+4)+'px'; }
+    setTimeout(function(){ try{ inp.focus(); }catch(err){} grow(); },0);
+    var done=false;
+    function doCommit(){
+      if(done) return; done=true;
+      var val=inp.value.trim(); removeTextInput();
+      if(val){ commit({type:'text', x:wp.x, y:wp.y, text:val}); }
+    }
+    inp.addEventListener('input', grow);
+    inp.addEventListener('keydown', function(ev){
+      ev.stopPropagation();
+      if(ev.key==='Enter' && !ev.shiftKey){ ev.preventDefault(); doCommit(); }  /* Entrée = valider, Maj+Entrée = nouvelle ligne */
+      else if(ev.key==='Escape'){ done=true; removeTextInput(); }
+    });
+    inp.addEventListener('blur', doCommit);
+  }
+
+  /* ---- interaction ---- */
+  var drawing=false, curStroke=null, doorA=null;
+  var panning=false, panStart=null, panOrig=null;
+  var arrowTip=null;
+
+  function onDown(e){
+    if(e.button===1){ e.preventDefault(); panning=true; panStart=getScreenPos(e); panOrig={ox:view.ox,oy:view.oy}; canvas.style.cursor='grabbing'; return; }
+    if(e.button===2) return;
+    if(activeTextInput) return;
+    e.preventDefault();
+    var wp=toWorld(getScreenPos(e));
+    if(state.tool==='eraser'){ drawing=true; eraseAt(wp); return; }   // clic = efface, glisser = efface en continu
+    if(state.tool==='text'){ openTextInput(e, wp); return; }
+    if(state.tool==='icon'){ commit({type:'icon', x:wp.x, y:wp.y, emoji:state.icon}); return; }
+    if(state.tool==='arrow'){
+      if(arrowTip===null){ arrowTip=wp; }
+      else { commit({type:'arrow', tip:arrowTip, tail:wp}); arrowTip=null; }
+      return;
+    }
+    if(state.tool==='door' || state.tool==='secret'){ drawing=true; doorA=wp; return; }
+    if(state.tool==='stairs'){ drawing=true; doorA=wp; return; }
+    var strokeType=(state.tool==='river')?'river':(state.tool==='foliage')?'foliage':'corridor';
+    drawing=true; curStroke={type:strokeType, points:[wp], width:state.corridorWidth};
+  }
+  function onMove(e){
+    if(panning){ e.preventDefault(); var s=getScreenPos(e); view.ox=panOrig.ox+(s.x-panStart.x); view.oy=panOrig.oy+(s.y-panStart.y); paint(); return; }
+    if(state.tool==='arrow' && arrowTip!==null){ paint({type:'arrow', tip:arrowTip, tail:toWorld(getScreenPos(e))}); return; }
+    if(!drawing) return;
+    if(e.cancelable) e.preventDefault();
+    var wp=toWorld(getScreenPos(e));
+    if(state.tool==='eraser'){ eraseAt(wp); return; }
+    if(state.tool==='door'){ paint({type:'door', a:doorA, b:wp}); return; }
+    if(state.tool==='secret'){ paint({type:'secret', a:doorA, b:wp}); return; }
+    if(state.tool==='stairs'){ paint({type:'stairs', a:doorA, b:wp, width:state.corridorWidth}); return; }
+    var last=curStroke.points[curStroke.points.length-1];
+    if(Math.hypot(wp.x-last.x, wp.y-last.y) > 5/view.scale){ curStroke.points.push(wp); }
+    paint(curStroke);
+  }
+  function onUp(e){
+    if(panning){ panning=false; canvas.style.cursor=cursorFor(state.tool); renderScene(); paint(); return; }
+    if(!drawing) return;
+    drawing=false;
+    if(state.tool==='eraser'){ return; }
+    if(state.tool==='door'){ var wp=toWorld(getScreenPos(e)); commit({type:'door', a:doorA, b:wp}); doorA=null; return; }
+    if(state.tool==='secret'){ var wps=toWorld(getScreenPos(e)); commit({type:'secret', a:doorA, b:wps}); doorA=null; return; }
+    if(state.tool==='stairs'){ var wpt=toWorld(getScreenPos(e)); commit({type:'stairs', a:doorA, b:wpt, width:state.corridorWidth}); doorA=null; return; }
+    if(curStroke && curStroke.type==='foliage' && curStroke.points.length>=1){ commit(curStroke); }
+    else if(curStroke && curStroke.points.length>=2){ commit(curStroke); } else { paint(); }
+    curStroke=null;
+  }
+  function onWheel(e){
+    e.preventDefault();
+    var s=getScreenPos(e);
+    var wx=(s.x-view.ox)/view.scale, wy=(s.y-view.oy)/view.scale;
+    var factor = e.deltaY<0 ? 1.1 : 1/1.1;
+    var ns=Math.min(6, Math.max(0.15, view.scale*factor));
+    view.scale=ns; view.ox=s.x-wx*ns; view.oy=s.y-wy*ns;
+    renderScene(); paint();
+  }
+
+  canvas.addEventListener('mousedown', onDown);
+  window.addEventListener('mousemove', onMove);
+  window.addEventListener('mouseup', onUp);
+  canvas.addEventListener('wheel', onWheel, {passive:false});
+  canvas.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+  canvas.addEventListener('auxclick', function(e){ if(e.button===1) e.preventDefault(); });
+  /* ---- tactile : 1 doigt = outil courant ; 2 doigts = pan + pinch-zoom ---- */
+  var pinch=null;
+  function touchDist(t){ var dx=t[0].clientX-t[1].clientX, dy=t[0].clientY-t[1].clientY; return Math.hypot(dx,dy); }
+  function touchMid(t){ var rect=canvas.getBoundingClientRect(); var mx=(t[0].clientX+t[1].clientX)/2, my=(t[0].clientY+t[1].clientY)/2; return { x:(mx-rect.left)*(canvas.width/rect.width), y:(my-rect.top)*(canvas.height/rect.height) }; }
+  function onTouchStart(e){
+    if(e.touches.length>=2){
+      e.preventDefault();
+      drawing=false; curStroke=null; doorA=null;   // annule un tracé éventuel
+      var mid=touchMid(e.touches);
+      pinch={ d0:touchDist(e.touches)||1, s0:view.scale, wx:(mid.x-view.ox)/view.scale, wy:(mid.y-view.oy)/view.scale };
+      paint();
+      return;
+    }
+    pinch=null; onDown(e);
+  }
+  function onTouchMove(e){
+    if(pinch && e.touches.length>=2){
+      e.preventDefault();
+      var mid=touchMid(e.touches), d=touchDist(e.touches);
+      var ns=Math.min(6, Math.max(0.15, pinch.s0*(d/pinch.d0)));
+      view.scale=ns; view.ox=mid.x-pinch.wx*ns; view.oy=mid.y-pinch.wy*ns;
+      renderScene(); paint(); return;
+    }
+    if(pinch) return;
+    onMove(e);
+  }
+  function onTouchEnd(e){
+    if(pinch){ if(e.touches.length<2){ pinch=null; renderScene(); paint(); } return; }
+    onUp(e);
+  }
+  canvas.addEventListener('touchstart', onTouchStart, {passive:false});
+  canvas.addEventListener('touchmove', onTouchMove, {passive:false});
+  canvas.addEventListener('touchend', onTouchEnd);
+  canvas.addEventListener('touchcancel', onTouchEnd);
+
+  document.addEventListener('keydown', function(e){
+    if(e.key==='Escape' && arrowTip!==null){ arrowTip=null; paint(); return; }
+    if((e.ctrlKey || e.metaKey) && (e.key==='z' || e.key==='Z')){ e.preventDefault(); undo(); }
+  });
+
+  /* ---- outils ---- */
+  function setTool(name){
+    state.tool=name; removeTextInput(); arrowTip=null;
+    [toolCorridorBtn,toolRiverBtn,toolFoliageBtn,toolDoorBtn,toolSecretBtn,toolStairsBtn,toolTextBtn,toolArrowBtn,toolIconBtn,toolEraserBtn].forEach(function(b){ if(b) b.classList.remove('active'); });
+    var m={corridor:toolCorridorBtn, river:toolRiverBtn, foliage:toolFoliageBtn, door:toolDoorBtn, secret:toolSecretBtn, stairs:toolStairsBtn, text:toolTextBtn, arrow:toolArrowBtn, icon:toolIconBtn, eraser:toolEraserBtn};
+    if(m[name]) m[name].classList.add('active');
+    canvas.style.cursor=cursorFor(name);
+    if(initialized) paint();
+  }
+  widthPicker.addEventListener('input', function(e){ state.corridorWidth=parseInt(e.target.value,10); widthDisplay.textContent=state.corridorWidth; });
+  undoBtn.addEventListener('click', undo);
+  clearBtn.addEventListener('click', function(){ showMessage("Effacer le parchemin","Voulez-vous jeter ce parchemin au feu ?", true, clearAll); });
+  saveBtn.addEventListener('click', exportPNG);
+
+  if(toolCorridorBtn) toolCorridorBtn.addEventListener('click', function(){ setTool('corridor'); });
+  if(toolRiverBtn) toolRiverBtn.addEventListener('click', function(){ setTool('river'); });
+  if(toolFoliageBtn) toolFoliageBtn.addEventListener('click', function(){ setTool('foliage'); });
+  if(toolDoorBtn)     toolDoorBtn.addEventListener('click', function(){ setTool('door'); });
+  if(toolSecretBtn)   toolSecretBtn.addEventListener('click', function(){ setTool('secret'); });
+  if(toolStairsBtn)   toolStairsBtn.addEventListener('click', function(){ setTool('stairs'); });
+  if(toolEraserBtn)   toolEraserBtn.addEventListener('click', function(){ setTool('eraser'); });
+  if(toolTextBtn)     toolTextBtn.addEventListener('click', function(){ setTool('text'); });
+  if(toolArrowBtn)    toolArrowBtn.addEventListener('click', function(){ setTool('arrow'); });
+  if(toolIconBtn) toolIconBtn.addEventListener('click', function(e){
+    e.stopPropagation();
+    if(!iconMenu) return;
+    if(iconMenu.classList.contains('show')){ iconMenu.classList.remove('show'); return; }
+    var r=toolIconBtn.getBoundingClientRect();
+    var mw=Math.min(340, window.innerWidth*0.92);
+    iconMenu.style.left=Math.max(8, Math.min(r.left, window.innerWidth-mw-8))+'px';
+    iconMenu.style.top=(r.bottom+6)+'px';
+    iconMenu.style.maxHeight=(window.innerHeight-r.bottom-16)+'px';
+    iconMenu.classList.add('show');
+  });
+  if(iconMenu){
+    iconMenu.addEventListener('click', function(e){ e.stopPropagation(); });
+    var ibtns=iconMenu.querySelectorAll('[data-emoji]');
+    for(var q=0;q<ibtns.length;q++){
+      (function(b){
+        b.addEventListener('click', function(){
+          state.icon=b.getAttribute('data-emoji');
+          if(toolIconBtn){ var ce=toolIconBtn.querySelector('.cur-emoji'); if(ce) ce.textContent=state.icon; }
+          iconMenu.classList.remove('show');
+          setTool('icon');
+        });
+      })(ibtns[q]);
+    }
+  }
+  document.addEventListener('click', function(){ if(iconMenu) iconMenu.classList.remove('show'); });
+  setTool('corridor');
+
+  /* ---- export PNG (toute la carte, à l'échelle 1) ---- */
+  function contentBounds(){
+    if(!objects.length) return {minX:0,minY:0,w:800,h:600};
+    var minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+    function ext(x,y,r){ r=r||0; if(x-r<minX)minX=x-r; if(y-r<minY)minY=y-r; if(x+r>maxX)maxX=x+r; if(y+r>maxY)maxY=y+r; }
+    for(var i=0;i<objects.length;i++){
+      var o=objects[i];
+      if(o.type==='corridor'){ var r=o.width/2+INK_THICKNESS+HATCH_BAND+4; for(var k=0;k<o.points.length;k++){ ext(o.points[k].x,o.points[k].y,r); } }
+      else if(o.type==='river'){ var rr=o.width/2+6; for(var kr=0;kr<o.points.length;kr++){ ext(o.points[kr].x,o.points[kr].y,rr); } }
+      else if(o.type==='foliage'){ var rf=o.width/2+4; for(var kf=0;kf<o.points.length;kf++){ ext(o.points[kf].x,o.points[kf].y,rf); } }
+      else if(o.type==='door' || o.type==='secret'){ ext(o.a.x,o.a.y,30); ext(o.b.x,o.b.y,30); }
+      else if(o.type==='stairs'){ var sr=(o.width||40); ext(o.a.x,o.a.y,sr); ext(o.b.x,o.b.y,sr); }
+      else if(o.type==='arrow'){ ext(o.tip.x,o.tip.y,18); ext(o.tail.x,o.tail.y,18); }
+      else if(o.type==='text'){ var tl=String(o.text).split('\n'); var ml=0; for(var tt=0;tt<tl.length;tt++){ if(tl[tt].length>ml) ml=tl[tt].length; } ext(o.x,o.y,6); ext(o.x+ml*12+24, o.y+tl.length*22+18, 6); }
+      else if(o.type==='icon'){ ext(o.x,o.y,20); }
+    }
+    return {minX:minX, minY:minY, w:Math.max(1,maxX-minX), h:Math.max(1,maxY-minY)};
+  }
+  function exportPNG(){
+    try{
+      var b=contentBounds(), pad=40;
+      var tmp=document.createElement('canvas');
+      tmp.width=Math.round(b.w+pad*2); tmp.height=Math.round(b.h+pad*2);
+      var tctx=tmp.getContext('2d');
+      tctx.fillStyle=PARCHMENT_COLOR; tctx.fillRect(0,0,tmp.width,tmp.height);
+      tctx.setTransform(1,0,0,1, pad-b.minX, pad-b.minY);
+      var i,o;
+      corridorHaloPass(tctx);
+      for(i=0;i<objects.length;i++){ o=objects[i]; if(o.type==='river') paintRiver(tctx,o); }
+      corridorBodyPass(tctx);
+      for(i=0;i<objects.length;i++){ o=objects[i]; if(o.type==='foliage') paintFoliage(tctx,o); }
+      for(i=0;i<objects.length;i++){ o=objects[i]; if(o.type==='stairs') paintStairs(tctx,o); }
+      for(i=0;i<objects.length;i++){ o=objects[i]; if(o.type==='door') paintDoor(tctx,o); }
+      for(i=0;i<objects.length;i++){ o=objects[i]; if(o.type==='secret') paintSecret(tctx,o); }
+      for(i=0;i<objects.length;i++){ o=objects[i]; if(o.type==='icon') paintIcon(tctx,o); }
+      for(i=0;i<objects.length;i++){ o=objects[i]; if(o.type==='arrow') paintArrow(tctx,o); }
+      for(i=0;i<objects.length;i++){ o=objects[i]; if(o.type==='text') paintText(tctx,o); }
+      tctx.setTransform(1,0,0,1,0,0);
+      var link=document.createElement('a');
+      link.download='donjon-osr.png'; link.href=tmp.toDataURL('image/png');
+      document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    }catch(err){ showMessage("Erreur","Impossible d'exporter l'image. "+err.message, false, null); }
+  }
+
+  /* ---- init autonome ---- */
+  function boot(){ if(!initialized){ initialized=true; loadMap(); } fitCanvas(); }
+  window.addEventListener('resize', function(){ fitCanvas(); });
+  if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', boot); }
+  else { boot(); }
+})();
+
+</script>
+</body>
+</html>
