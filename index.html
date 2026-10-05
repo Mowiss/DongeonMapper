@@ -66,6 +66,35 @@
   #toolIcon{ width:auto; min-width:38px; padding:0 6px; gap:3px; }
   #toolIcon .cur-emoji{ font-size:15px; line-height:1; }
   #toolIcon .cur-emoji:empty{ display:none; }
+  .drop-tool{ width:auto !important; min-width:38px; padding:0 5px 0 7px; gap:3px; }
+  .drop-tool .cur-path{ display:inline-flex; }
+  .drop-tool svg.caret{ width:9px; height:6px; opacity:.75; }
+  .map-drop-menu{
+    display:none; position:fixed; z-index:72; width:256px;
+    background:linear-gradient(135deg, var(--parchment), var(--parchment-dark));
+    border:2px solid var(--gold); border-radius:12px; padding:6px;
+    box-shadow:0 18px 44px rgba(0,0,0,.5);
+  }
+  .map-drop-menu.show{ display:block; }
+  .map-path-item{
+    display:flex; align-items:center; gap:10px; width:100%; text-align:left;
+    padding:7px 9px; border:1px solid transparent; border-radius:8px; background:transparent;
+    color:var(--ink); cursor:pointer;
+  }
+  .map-path-item + .map-path-item{ margin-top:3px; }
+  .map-path-sep{
+    display:flex; align-items:center; gap:8px; margin:8px 4px 5px;
+    font-family:'Cinzel', serif; font-weight:700; font-size:11px; letter-spacing:.08em; color:var(--gold);
+  }
+  .map-path-sep::before, .map-path-sep::after{ content:''; flex:1; height:1px; background:var(--gold); opacity:.7; }
+  .map-path-item:hover{ background:rgba(255,252,240,.6); border-color:var(--line); }
+  .map-path-item.active{ background:linear-gradient(135deg, var(--gold-light), #d9bd72); box-shadow:inset 0 0 0 2px var(--red-dark); }
+  .map-path-item .pi{ width:34px; height:34px; flex:0 0 auto; display:inline-flex; align-items:center; justify-content:center;
+    border:1px solid var(--line); border-radius:7px; background:rgba(255,252,240,.7); }
+  .map-path-item.active .pi{ border-color:var(--red-dark); }
+  .map-path-item .pi svg{ width:20px; height:20px; }
+  .map-path-item .pl{ font-family:'Cinzel', serif; font-weight:700; font-size:14px; color:var(--red-dark); line-height:1.15; display:flex; flex-direction:column; }
+  .map-path-item .pl small{ font-family:'EB Garamond', serif; font-weight:400; font-style:italic; font-size:13px; color:var(--ink-soft); }
   #toolSvg{ width:auto; min-width:38px; padding:0 6px; gap:3px; }
   #toolSvg .cur-svg svg{ width:16px; height:16px; }
   #toolSvg .cur-svg:empty{ display:none; }
@@ -173,14 +202,8 @@
       <div class="mapper-left">
         <span class="mapper-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;vertical-align:-3px;margin-right:5px"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg>Carte</span>
         <div class="mapper-tools">
-          <button class="mapper-tool active" id="toolCorridor" data-tool="corridor" title="Couloir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l3.5-1L18 8.5 15.5 6 5 16.5 4 20z"/><path d="M14 7.5l2.5 2.5"/></svg></button>
-          <button class="mapper-tool" id="toolRiver" data-tool="river" title="Rivière (clic-glisser)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8q3-3 6 0t6 0 3-1.2"/><path d="M3 13q3-3 6 0t6 0 3-1.2"/><path d="M3 18q3-3 6 0t6 0 3-1.2"/></svg></button>
-          <button class="mapper-tool" id="toolFoliage" data-tool="foliage" title="Feuillage / forêt (clic-glisser)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.5" cy="9.5" r="3.2"/><circle cx="15" cy="9" r="3.2"/><circle cx="11.5" cy="13" r="3.6"/><path d="M11.5 16.5V21"/></svg></button>
-          <button class="mapper-tool" id="toolDoor" data-tool="door" title="Porte (clic-glisser-lâcher)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 21V4a1 1 0 0 1 1.2-1l8 1.6A1 1 0 0 1 16 5.6V21"/><path d="M4 21h16"/><circle cx="13" cy="12" r="1" fill="currentColor" stroke="none"/></svg></button>
-          <button class="mapper-tool" id="toolSecret" data-tool="secret" title="Porte secrète (clic-glisser-lâcher)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v18M18 3v18"/><rect x="9" y="6" width="6" height="12" stroke-dasharray="2.2 2.2"/><path d="M11 11.5a1 1 0 1 1 1.6.8c-.4.3-.6.5-.6 1.1" stroke-width="1.6"/><circle cx="12" cy="15.3" r=".55" fill="currentColor" stroke="none"/></svg></button>
-          <button class="mapper-tool" id="toolStairs" data-tool="stairs" title="Escalier (clic-glisser)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4v-4h4v-4h4v-4h4"/></svg></button>
-          <button class="mapper-tool" id="toolText" data-tool="text" title="Texte (cliquer pour écrire)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6V4h14v2M12 4v16M9 20h6"/></svg></button>
-          <button class="mapper-tool" id="toolArrow" data-tool="arrow" title="Flèche (clic pointe puis clic queue)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg></button>
+          <button class="mapper-tool drop-tool active" id="toolPath" title="Tracés : chemin, eau, feuillage"><span class="cur-path"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h11a5 5 0 0 1 5 5v11"/><path d="M3 11h8a2 2 0 0 1 2 2v8"/></svg></span><svg class="caret" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l4 4 4-4"/></svg></button>
+          <button class="mapper-tool drop-tool" id="toolNote" title="Annotations : texte, flèche"><span class="cur-path"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6V4h14v2M12 4v16M9 20h6"/></svg></span><svg class="caret" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l4 4 4-4"/></svg></button>
           <button class="mapper-tool" id="toolIcon" title="Icône (choisir puis placer)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s6.5-6 6.5-10.5A6.5 6.5 0 0 0 5.5 10.5C5.5 15 12 21 12 21z"/><circle cx="12" cy="10.3" r="2.3"/></svg><span class="cur-emoji"></span></button>
           <button class="mapper-tool" id="toolSvg" title="Pictogramme (choisir puis placer — taille = curseur Largeur)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="2.5"/><path d="M7 16l3.5-4.5 2.5 3 2-2.5L17 16"/><circle cx="15.5" cy="8.5" r="1.4"/></svg><span class="cur-svg"></span></button>
           <button class="mapper-tool" id="toolEraser" data-tool="eraser" title="Gomme (cliquer un élément pour l'effacer)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.5l6.5-6.5 6 6-5.5 5.5H8z"/><path d="M8.5 19.5H19"/><path d="M9.5 9l6 6"/></svg></button>
@@ -309,6 +332,25 @@
     </div>
   </div>
   <div id="mapSvgMenu"></div>
+  <div id="mapNoteMenu" class="map-drop-menu">
+    <button class="map-path-item" id="toolText" data-tool="text"><span class="pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6V4h14v2M12 4v16M9 20h6"/></svg></span><span class="pl">Texte<small>cliquer pour écrire</small></span></button>
+    <button class="map-path-item" id="toolArrow" data-tool="arrow"><span class="pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg></span><span class="pl">Flèche<small>clic la pointe, puis clic la queue</small></span></button>
+  </div>
+  <div id="mapPathMenu" class="map-drop-menu">
+    <button class="map-path-item" id="toolPencil" data-tool="pencil"><span class="pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l3.5-1L18 8.5 15.5 6 5 16.5 4 20z"/><path d="M14 7.5l2.5 2.5"/></svg></span><span class="pl">Crayon<small>dessin libre à main levée</small></span></button>
+    <div class="map-path-sep">Terrain</div>
+    <button class="map-path-item" id="toolCorridor" data-tool="corridor"><span class="pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h11a5 5 0 0 1 5 5v11"/><path d="M3 11h8a2 2 0 0 1 2 2v8"/></svg></span><span class="pl">Chemin<small>clic-glisser · couloir, salle</small></span></button>
+    <button class="map-path-item" id="toolRiver" data-tool="river"><span class="pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8q3-3 6 0t6 0 3-1.2"/><path d="M3 13q3-3 6 0t6 0 3-1.2"/><path d="M3 18q3-3 6 0t6 0 3-1.2"/></svg></span><span class="pl">Eau<small>clic-glisser · rivière, lac</small></span></button>
+    <button class="map-path-item" id="toolFoliage" data-tool="foliage"><span class="pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.5" cy="9.5" r="3.2"/><circle cx="15" cy="9" r="3.2"/><circle cx="11.5" cy="13" r="3.6"/><path d="M11.5 16.5V21"/></svg></span><span class="pl">Feuillage<small>clic-glisser · bosquet, forêt</small></span></button>
+    <button class="map-path-item" id="toolMeadow" data-tool="meadow"><span class="pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M5.5 20c0-3.5-.8-6-2.3-8"/><path d="M9 20c0-5 .9-8.5 3-11.5"/><path d="M12.5 20c0-3.6-.9-6-2.6-7.8"/><path d="M16 20c0-5 1-8.3 3.2-10.8"/><path d="M19.5 20c0-2.6.6-4.4 1.7-5.6"/></svg></span><span class="pl">Prairie<small>peindre · herbes hautes</small></span></button>
+    <button class="map-path-item" id="toolDesert" data-tool="desert"><span class="pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 17c3-4.5 6-6 9-6 2.6 0 4.3 1.6 5.2 3.4"/><path d="M11 20c2.6-3 5.2-4.3 7.5-4.3 1.3 0 2.5.4 3.5 1.2"/><path d="M8.4 12.6l1 2.4M10.8 12.2l.7 2.2"/><circle cx="17.5" cy="6" r="2"/></svg></span><span class="pl">Désert<small>peindre · étendue de sable</small></span></button>
+    <button class="map-path-item" id="toolWood" data-tool="wood"><span class="pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="1"/><path d="M3 9.3h18M3 14.7h18M9 4v5.3M15 9.3v5.4M7 14.7V20"/></svg></span><span class="pl">Plancher<small>peindre · lames de bois</small></span></button>
+    <button class="map-path-item" id="toolWall" data-tool="wall"><span class="pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18v12H3z"/><path d="M3 12h18M9 6v6M15 12v6"/></svg></span><span class="pl">Mur<small>clic, clic… · double-clic = fin</small></span></button>
+    <div class="map-path-sep">Ouvertures</div>
+    <button class="map-path-item" id="toolDoor" data-tool="door"><span class="pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 21V4a1 1 0 0 1 1.2-1l8 1.6A1 1 0 0 1 16 5.6V21"/><path d="M4 21h16"/><circle cx="13" cy="12" r="1" fill="currentColor" stroke="none"/></svg></span><span class="pl">Porte<small>glisser en travers du passage</small></span></button>
+    <button class="map-path-item" id="toolSecret" data-tool="secret"><span class="pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v18M18 3v18"/><rect x="9" y="6" width="6" height="12" stroke-dasharray="2.2 2.2"/><path d="M11 11.5a1 1 0 1 1 1.6.8c-.4.3-.6.5-.6 1.1" stroke-width="1.6"/><circle cx="12" cy="15.3" r=".55" fill="currentColor" stroke="none"/></svg></span><span class="pl">Porte secrète<small>glisser en travers du passage</small></span></button>
+    <button class="map-path-item" id="toolStairs" data-tool="stairs"><span class="pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4v-4h4v-4h4v-4h4"/></svg></span><span class="pl">Escalier<small>clic-glisser · volée de marches</small></span></button>
+  </div>
   <div id="mapOverlay"></div>
   <div id="mapModal">
     <h2 id="mapModalTitle">Attention</h2>
@@ -341,11 +383,27 @@
   var toolCorridorBtn = document.getElementById('toolCorridor');
   var toolRiverBtn = document.getElementById('toolRiver');
   var toolFoliageBtn = document.getElementById('toolFoliage');
+  var toolPathBtn = document.getElementById('toolPath');
+  var pathMenu = document.getElementById('mapPathMenu');
+  var toolWallBtn = document.getElementById('toolWall');
+  var toolPencilBtn = document.getElementById('toolPencil');
+  var toolMeadowBtn = document.getElementById('toolMeadow');
+  var toolDesertBtn = document.getElementById('toolDesert');
+  var toolWoodBtn = document.getElementById('toolWood');
   var toolDoorBtn = document.getElementById('toolDoor');
   var toolSecretBtn = document.getElementById('toolSecret');
   var toolStairsBtn = document.getElementById('toolStairs');
   var toolTextBtn = document.getElementById('toolText');
   var toolArrowBtn = document.getElementById('toolArrow');
+  var toolNoteBtn = document.getElementById('toolNote');
+  var noteMenu = document.getElementById('mapNoteMenu');
+  /* menus déroulants « outils » : chaque groupe = un bouton de barre + un menu + ses outils */
+  var DROP_GROUPS = [
+    { btn:toolPathBtn, menu:pathMenu, label:'Tracé',
+      tools:{ pencil:toolPencilBtn, corridor:toolCorridorBtn, river:toolRiverBtn, foliage:toolFoliageBtn, meadow:toolMeadowBtn, desert:toolDesertBtn, wood:toolWoodBtn, wall:toolWallBtn, door:toolDoorBtn, secret:toolSecretBtn, stairs:toolStairsBtn } },
+    { btn:toolNoteBtn, menu:noteMenu, label:'Annotation',
+      tools:{ text:toolTextBtn, arrow:toolArrowBtn } }
+  ];
   var toolIconBtn = document.getElementById('toolIcon');
   var toolEraserBtn = document.getElementById('toolEraser');
   var iconMenu = document.getElementById('mapIconMenu');
@@ -358,14 +416,187 @@
      - chaque calque : { d:'chemin SVG', fill:true? (remplissage parchemin = masque ce qu'il y a dessous), stroke:false? , ink:true? (remplissage encre) }
      - cat : nom de la rubrique dans le menu                                   */
   var SVG_STAMPS = {
+    /* Conventions : lumière venant du haut-gauche → faces droites / toits côté droit en « shade ».
+       Couches : fill (parchemin) · shade (parchemin ombré) · ink (encre) · fine:true (trait fin) · stroke:false */
     maison: {
       title:'Maison', cat:'Bâtiments',
       layers:[
-        { d:'M5.5 10.2V20.5h13V10.2L12 4.6z', fill:true },          // corps + pignon
-        { d:'M15.5 7.4V4h2.2v5.3', fill:true },                     // cheminée
-        { d:'M3 11.8L12 4l9 7.8' },                                  // débord de toit
-        { d:'M10.2 20.5v-5.2h3.6v5.2' },                             // porte
-        { d:'M7.4 12.2h2.6v2.6H7.4z M14 12.2h2.6v2.6H14z' }    // fenêtres
+        { d:'M15.4 6.2V2.8h2.4v5.2', fill:true },                                                     // cheminée
+        { d:'M16.6 2.8v4.4', fine:true },
+        { d:'M4.6 11.4h14.8v9.1H4.6z', fill:true },                                                   // murs
+        { d:'M16 11.4h3.4v9.1H16z', shade:true, stroke:false },                                       // mur à l'ombre
+        { d:'M4.6 11.4h14.8v9.1H4.6z' },
+        { d:'M4.6 14.2h3.2 M16.2 14.2h3.2 M4.6 17.3h4 M15.6 17.3h3.8', fine:true },                   // colombages
+        { d:'M2.4 12L7 4.6h10L21.6 12z', fill:true },                                                 // toit
+        { d:'M12 4.6h5L21.6 12H12z', shade:true, stroke:false },                                      // pan à l'ombre
+        { d:'M2.4 12L7 4.6h10L21.6 12z' },
+        { d:'M4.3 9h15.4 M5.8 6.8h12.4 M8 4.6l-1.6 2.2 M11 4.6l-.8 2.2 M14 4.6l.6 2.2 M7.4 6.8l-1.3 2.2 M11 6.8l-.4 2.2 M14.6 6.8l.7 2.2 M18 6.8l1.3 2.2 M6 9l-1.6 3 M9.6 9l-.8 3 M13.2 9l.2 3 M17 9l1 3', fine:true }, // tuiles
+        { d:'M10.4 20.5v-4.3a1.6 1.6 0 0 1 3.2 0v4.3z', shade:true },                                 // porte
+        { d:'M12 14.8v5.7 M13 18.3h0', fine:true },
+        { d:'M6.2 13.4h2.6v2.6H6.2z M15.2 13.4h2.6v2.6h-2.6z', ink:true },                            // fenêtres
+        { d:'M7.5 13.4v2.6 M6.2 14.7h2.6 M16.5 13.4v2.6 M15.2 14.7h2.6', fine:true, light:true },
+        { d:'M1.6 20.5h20.8' },
+        { d:'M2.4 20.5l.4-1 .4 1 M21 20.5l.4-1.1.4 1.1 M3.4 20.5l.3-.8', fine:true }                   // touffes
+      ]
+    },
+    chateau: {
+      title:'Château fort', cat:'Bâtiments',
+      layers:[
+        { d:'M8.6 14V4.6h1.3v1.2h1V4.6h1.3v1.2h1V4.6h1.3v1.2h1V4.6h1.1V14z', fill:true },             // donjon (arrière)
+        { d:'M13.2 4.6h2.2V14h-2.2z', shade:true, stroke:false },
+        { d:'M8.6 14V4.6h1.3v1.2h1V4.6h1.3v1.2h1V4.6h1.3v1.2h1V4.6h1.1V14' },
+        { d:'M11.3 8.6a.7.7 0 0 1 1.4 0v1.6h-1.4z', ink:true },
+        { d:'M12 4.6V1.4 M12 1.4l2.6.8L12 3', fine:false },                                          // bannière
+        { d:'M5.4 20.5V11.8h1.4v1.3h1.2v-1.3h1.4v1.3h1.2v-1.3H12v1.3h1.2v-1.3h1.4v1.3h1.2v-1.3h1.4v1.3h1.2v-1.3h1.4v8.7z', fill:true }, // courtine crénelée
+        { d:'M5.6 15.6h3.2 M10 15.6h4 M15.4 15.6h3.2 M5.6 18h2 M8.8 18h1.4 M15 18h3.6', fine:true },  // assises de pierre
+        { d:'M9.8 20.5v-3.4a2.2 2.2 0 0 1 4.4 0v3.4z', ink:true },                                    // porte
+        { d:'M2 20.5V9.4h4.4v11.1z', fill:true },                                                     // tour gauche (éclairée)
+        { d:'M17.6 20.5V9.4H22v11.1z', shade:true },                                                  // tour droite (ombre)
+        { d:'M2 12.6h4.4 M2 15.8h4.4 M17.6 12.6H22 M17.6 15.8H22 M3.6 9.4v3.2 M4.8 12.6v3.2 M19.2 9.4v3.2 M20.4 12.6v3.2', fine:true },
+        { d:'M3.8 17.2h.8v2h-.8z M19.4 17.2h.8v2h-.8z', ink:true },                                   // meurtrières
+        { d:'M1.2 9.6L4.2 3l3 6.6z', fill:true },                                                     // toits coniques
+        { d:'M4.2 3l3 6.6H4.2z', shade:true, stroke:false },
+        { d:'M1.2 9.6L4.2 3l3 6.6z' },
+        { d:'M16.8 9.6L19.8 3l3 6.6z', shade:true },
+        { d:'M4.2 3V1.6 M19.8 3V1.6', fine:true },
+        { d:'M1 20.5h22' }
+      ]
+    },
+    tour: {
+      title:'Tour', cat:'Bâtiments',
+      layers:[
+        { d:'M8 20.5V9.2h8v11.3z', fill:true, stroke:false },                                         // fût
+        { d:'M13.4 9.2H16v11.3h-2.6z', shade:true, stroke:false },                                    // côté ombre
+        { d:'M8 20.5V9.2h8v11.3' },
+        { d:'M8 11.8h8 M8 14.6h8 M8 17.4h8 M10.2 9.2v2.6 M13.4 11.8v2.8 M10.8 14.6v2.8 M14 17.4v3.1', fine:true }, // pierres
+        { d:'M11.3 12.6a.7.7 0 0 1 1.4 0v1.8h-1.4z', ink:true },                                      // fenêtre
+        { d:'M10.6 20.5v-2.6a1.4 1.4 0 0 1 2.8 0v2.6z', ink:true },                                   // porte
+        { d:'M6.4 9.6L12 1.8l5.6 7.8c-3.6 1-7.6 1-11.2 0z', fill:true, stroke:false },                // toit conique
+        { d:'M12 1.8l5.6 7.8c-1.8.5-3.7.8-5.6.8z', shade:true, stroke:false },
+        { d:'M6.4 9.6L12 1.8l5.6 7.8c-3.6 1-7.6 1-11.2 0z' },
+        { d:'M12 1.8L9.2 9.9 M12 1.8l2.8 8.1 M12 1.8v8.6', fine:true },                               // arêtes du toit
+        { d:'M12 1.8V.5 M12 .5l1.8.6-1.8.6', fine:true },                                             // fanion
+        { d:'M4 20.5h16' },
+        { d:'M5 20.5l.4-1 .4 1 M18.6 20.5l.4-1 .4 1', fine:true }
+      ]
+    },
+    grotte: {
+      title:'Grotte', cat:'Nature',
+      layers:[
+        { d:'M1.8 19.5L3.6 15l1.6-.6L6.4 11l2-1.2L9.6 7l2.4-.8 1.4 1.4 2-.4 1.8 2.6 1.4.4 1.6 3.4 1.2 1.2 1.4 4.7z', fill:true }, // massif rocheux escarpé
+        { d:'M7.2 19.5c.2-3.5 1.7-6.3 4-6.7 2.6-.4 4.7 2.4 5.1 6.7z', ink:true },                                // bouche sombre, décentrée
+        { d:'M9.4 14.4l.7 2 .8-2.7z M12.4 13.2l.6 1.7.7-1.6z', fill:true, stroke:false },                        // stalactites (roche sur le noir)
+        { d:'M4.8 15.6l2.2.4 M10.2 9.4l2.4.3 M15.6 10.8l1.6 1.2 M18.2 15l1.4.3 M13.4 8.6l-.6 1.2' },             // strates / fissures
+        { d:'M17.4 19.5c.1-1.4.9-2.2 2-2.2s1.9.8 2 2.2z', fill:true },                                           // rocher éboulé
+        { d:'M1 19.5h22' }                                                                                         // sol
+      ]
+    },
+    rochers: {
+      title:'Rochers', cat:'Nature',
+      layers:[
+        { d:'M2.2 20l1-4.4 2.8-3.2 4-1 3 1.8 1.2 3.6-.4 3.2z', fill:true, stroke:false },                 // gros bloc
+        { d:'M9.4 14.4l3.6-1.2 1.2 3.6-.4 3.2H10z', shade:true, stroke:false },                           // face à l'ombre
+        { d:'M2.2 20l1-4.4 2.8-3.2 4-1 3 1.8 1.2 3.6-.4 3.2' },
+        { d:'M6 12.4l3.4 2 3.6-1.2 M9.4 14.4L10 20', fine:true },                                         // arêtes
+        { d:'M11.2 15.8l1.4 1.3 M11 18l1.8 1.5 M5.2 16.4l1.2.9', fine:true },                              // hachures / fissure
+        { d:'M14.6 20l.6-3 2.2-2.2 2.8-.2 1.8 2 .4 3.4z', fill:true, stroke:false },                      // bloc moyen
+        { d:'M19 17.2l3-.6.4 3.4h-2.8z', shade:true, stroke:false },
+        { d:'M14.6 20l.6-3 2.2-2.2 2.8-.2 1.8 2 .4 3.4' },
+        { d:'M17.4 14.8l1.6 2.4 3-.6 M19 17.2l.6 2.8', fine:true },
+        { d:'M20.4 18.2l1 1.1', fine:true },
+        { d:'M12.6 20l.5-1.2 1.1-.2.6 1.4z', fill:true },                                                  // caillou
+        { d:'M1 20h22' }
+      ]
+    },
+    rocher: {
+      title:'Rocher', cat:'Nature',
+      layers:[
+        { d:'M3 20.2l1.2-5.4 3.2-4.4L12 8l4.6.6 3.2 3 1.4 4.4-.6 4.2z', fill:true, stroke:false },        // silhouette (éclairée)
+        { d:'M16.4 20.2l-1-7.2 4.4-1.4 1.4 4.4-.6 4.2z', shade:true, stroke:false },                       // face droite à l'ombre
+        { d:'M9.2 20.2l.8-7.6 5.4.4 1 7.2z', fill:true, stroke:false },                                    // face avant
+        { d:'M3 20.2l1.2-5.4 3.2-4.4L12 8l4.6.6 3.2 3 1.4 4.4-.6 4.2' },                                    // contour
+        { d:'M7.4 10.4l2.6 2.2 5.4.4 4.4-1.4 M10 12.6l-.8 7.6 M15.4 13l1 7.2', fine:true },                // arêtes des facettes
+        { d:'M17.4 14.4l1.4 1.3 M17.3 16.6l2.6 2.2 M17.6 18.8l1.4 1.2 M19.2 13.1l1.3 1.7', fine:true },    // hachures d'ombre
+        { d:'M12.2 14.6l.8 1.8-.6 1.6.5 1.2 M5.4 16.4l1.4.5 M12.6 9.6l1.6.4', fine:true },                // fissures
+        { d:'M20.8 20.2l.5-1.1 1.2-.3.7 1.4z M.9 20.2l.4-.9.9-.1.4 1z', fill:true },                      // cailloux
+        { d:'M.6 20.2h22.8' }
+      ]
+    },
+    buisson: {
+      title:'Buisson', cat:'Nature',
+      layers:[
+        { d:'M2.8 16.6a3.6 3.6 0 1 0 7.2 0a3.6 3.6 0 1 0 -7.2 0z M6.2 13.2a4.2 4.2 0 1 0 8.4 0a4.2 4.2 0 1 0 -8.4 0z M11 13.4a4 4 0 1 0 8 0a4 4 0 1 0 -8 0z M15 16.8a3.4 3.4 0 1 0 6.8 0a3.4 3.4 0 1 0 -6.8 0z M8.6 16.4a3.8 3.8 0 1 0 7.6 0a3.8 3.8 0 1 0 -7.6 0z M6.4 16.6V20.2H18.4V16.6z', bold:true },                                        // contour de l'union des touffes (moitié recouverte)
+        { d:'M2.8 16.6a3.6 3.6 0 1 0 7.2 0a3.6 3.6 0 1 0 -7.2 0z M6.2 13.2a4.2 4.2 0 1 0 8.4 0a4.2 4.2 0 1 0 -8.4 0z M11 13.4a4 4 0 1 0 8 0a4 4 0 1 0 -8 0z M15 16.8a3.4 3.4 0 1 0 6.8 0a3.4 3.4 0 1 0 -6.8 0z M8.6 16.4a3.8 3.8 0 1 0 7.6 0a3.8 3.8 0 1 0 -7.6 0z M6.4 16.6V20.2H18.4V16.6z', fill:true, stroke:false },                          // feuillage : masque les arcs internes
+        { d:'M8.4 14.4c.8-.7 1.9-.9 2.8-.6 M12.9 15.8c.6-.9 1.7-1.4 2.7-1.2 M7.4 18.6c.5-.8 1.3-1.2 2.1-1.2', fine:true }, // creux entre touffes
+        { d:'M9.4 10.6l.7.3 M13.4 10.8l.6.4 M5.4 15.2l.6.2 M11.4 17.8l.6.3 M14.4 18.8l.5.4', fine:true },      // feuilles (côté éclairé)
+        { d:'M16.6 11.4l1.3 1.2 M17.4 13.4l1.6 1.5 M19.2 15.2l1.5 1.4 M18.6 17.4l1.8 1.6 M16.4 17.6l1.6 1.6 M16 15.4l1.2 1.2', fine:true }, // hachures d'ombre
+        { d:'M1.2 20.2h21.6' },
+        { d:'M2.4 20.2l.4-1 .4 1 M21.4 20.2l.4-.9.4.9', fine:true }
+      ]
+    },
+    buissons: {
+      title:'Buissons', cat:'Nature',
+      layers:[
+        { d:'M2.6 17.8a2.4 2.4 0 1 0 4.8 0a2.4 2.4 0 1 0 -4.8 0z M4.8 16.2a3 3 0 1 0 6 0a3 3 0 1 0 -6 0z M8 18a2.2 2.2 0 1 0 4.4 0a2.2 2.2 0 1 0 -4.4 0z M5 17.8V20.4H10.2V17.8z M11.4 17a3.2 3.2 0 1 0 6.4 0a3.2 3.2 0 1 0 -6.4 0z M14.4 15.4a3.4 3.4 0 1 0 6.8 0a3.4 3.4 0 1 0 -6.8 0z M18.2 18a2.4 2.4 0 1 0 4.8 0a2.4 2.4 0 1 0 -4.8 0z M14.6 17V20.4H20.6V17z', bold:true },
+        { d:'M2.6 17.8a2.4 2.4 0 1 0 4.8 0a2.4 2.4 0 1 0 -4.8 0z M4.8 16.2a3 3 0 1 0 6 0a3 3 0 1 0 -6 0z M8 18a2.2 2.2 0 1 0 4.4 0a2.2 2.2 0 1 0 -4.4 0z M5 17.8V20.4H10.2V17.8z M11.4 17a3.2 3.2 0 1 0 6.4 0a3.2 3.2 0 1 0 -6.4 0z M14.4 15.4a3.4 3.4 0 1 0 6.8 0a3.4 3.4 0 1 0 -6.8 0z M18.2 18a2.4 2.4 0 1 0 4.8 0a2.4 2.4 0 1 0 -4.8 0z M14.6 17V20.4H20.6V17z', fill:true, stroke:false },
+        { d:'M6.2 17.4c.5-.5 1.2-.7 1.8-.6 M15.6 17.8c.6-.6 1.5-.9 2.3-.8', fine:true },
+        { d:'M7 13.8l.5.3 M16.8 12.8l.6.3 M3.8 16.8l.5.2 M13.4 15.2l.5.3', fine:true },
+        { d:'M9.2 16.2l1 1 M10.4 18.2l.9.9 M19.4 13.6l1.2 1.1 M20.2 15.8l1.3 1.2 M21.4 17.6l.9.9 M18.6 17.8l1.2 1.1', fine:true },
+        { d:'M1 20.4h22' },
+        { d:'M12 20.4l.3-.9.3.9 M12.8 20.4l.3-.7.3.7', fine:true }
+      ]
+    },
+    arbre_mort: {
+      title:'Arbre mort', cat:'Nature',
+      layers:[
+        { d:'M9.2 8C8.2 6.4 6.6 5.4 4.6 5 M8.9 7.2L8.1 4.2 M14.4 6.6c1-1.4 2.4-2.2 4-2.4 M14.7 6.1l.5-3.1 M16.6 4.6l1.7-1.9 M11.3 12.6c-1.4-.7-2.9-.7-4.3-.1 M12.6 13.4c1.2-.9 2.6-1.1 4-.8' }, // branches
+        { d:'M4.6 5l-1.7-.4 M4.6 5l-.6-1.5 M6.4 5.7l-1 1.2 M8.1 4.2l-.7-1.5 M8.1 4.2l.8-1.2 M18.4 4.2l1.6-.1 M18.4 4.2l.8 1.1 M15.2 3l-.5-1.4 M15.2 3l.9-1.1 M7 12.5l-1.3-.7 M7 12.5l-1 .9 M16.6 12.6l1.2-.8 M16.6 12.6l.8 1', fine:true }, // brindilles
+        { d:'M9.2 20.4c1.2-2.2 1.6-5 1.2-8.2-.2-1.6-.8-3-1.6-4.2h1.6c.6 1 1 2 1.3 3.2.4-1.6 1.2-3.2 2.4-4.6l1.2.6c-1.2 1.6-1.9 3.4-2 5.4-.1 2.8.6 5.4 1.9 7.8z', fill:true, stroke:false }, // tronc fourchu
+        { d:'M12.5 12c-.1 2.8.6 5.6 1.8 8.4h-1.9c-.5-2.6-.5-5.4.1-8.4z', shade:true, stroke:false },   // côté à l'ombre
+        { d:'M9.2 20.4c1.2-2.2 1.6-5 1.2-8.2-.2-1.6-.8-3-1.6-4.2h1.6c.6 1 1 2 1.3 3.2.4-1.6 1.2-3.2 2.4-4.6l1.2.6c-1.2 1.6-1.9 3.4-2 5.4-.1 2.8.6 5.4 1.9 7.8' },
+        { d:'M11.2 15.6a.45.65 0 1 0 .9 0a.45.65 0 1 0-.9 0z', ink:true },                            // nœud
+        { d:'M11.2 13l.1 1.3 M12.1 17.4l.2 1.7 M10.6 18.2l-.2 1.4 M10.6 10.4l.3 1', fine:true },        // écorce
+        { d:'M7.4 20.4c.8-.3 1.5-.8 2-1.6 M16.8 20.4c-.9-.3-1.6-.8-2-1.6', fine:true },                // racines
+        { d:'M2 20.4h20' },
+        { d:'M4 20.4l.3-.9.3.9 M19.4 20.4l.3-.8.3.8', fine:true }
+      ]
+    },
+    tombe: {
+      title:'Tombe', cat:'Architecture',
+      layers:[
+        { d:'M8 18.8V8.6a4 4 0 0 1 8 0v10.2z', fill:true, stroke:false },                           // stèle
+        { d:'M14 5.1A4 4 0 0 1 16 8.6v10.2h-2z', shade:true, stroke:false },                         // côté à l'ombre
+        { d:'M8 18.8V8.6a4 4 0 0 1 8 0v10.2' },
+        { d:'M12 8.6v5 M10.2 10.3h3.6', fine:false },                                                 // croix gravée
+        { d:'M10.3 15.6h3.4 M10.8 16.9h2.4 M9.1 11.6l.8.9-.4 1.2', fine:true },                       // épitaphe, fêlure
+        { d:'M4.6 20.4c1.8-2.2 4.6-3 7.4-3s5.6.8 7.4 3z', fill:true },                                // tertre
+        { d:'M8.2 19.4l.9-.3 M11.6 18.6l.8.2 M15 19.2l.8.3 M6.8 20l.6-.4', fine:true },               // mottes
+        { d:'M1.6 20.4h20.8' },
+        { d:'M3 20.4l.3-.9.3.9 M20.4 20.4l.3-.8.3.8', fine:true }
+      ]
+    },
+    colonne: {
+      title:'Colonne grecque', cat:'Architecture',
+      layers:[
+        { d:'M8.4 7.6h7.2V18H8.4z', fill:true },                                                                   // fût
+        { d:'M10.8 9v7.6 M13.2 9v7.6' },                                                                           // cannelures
+        { d:'M7 18h10v1.5H7z', fill:true },                                                                        // base
+        { d:'M5.5 19.5h13V21h-13z', fill:true },                                                                   // socle
+        { d:'M7.2 5.2h9.6c0 1.6-.9 2.4-2 2.4H9.2c-1.1 0-2-.8-2-2.4z', fill:true },                                 // échine
+        { d:'M6 6.6a1.2 1.2 0 1 0 2.4 0a1.2 1.2 0 1 0-2.4 0z M15.6 6.6a1.2 1.2 0 1 0 2.4 0a1.2 1.2 0 1 0-2.4 0z', fill:true }, // volutes
+        { d:'M5.5 3.6h13v1.6h-13z', fill:true }                                                                    // abaque
+      ]
+    },
+    colonne_brisee: {
+      title:'Colonne brisée', cat:'Architecture',
+      layers:[
+        { d:'M5.4 18V10.2l1.6-1.4 1.2 1.6 1.7-2 1.3 1.4 1.4-.6V18z', fill:true },                                  // fût brisé
+        { d:'M7.8 11.6v5 M10.2 11.2v5.4' },                                                                        // cannelures
+        { d:'M4 18h10v1.5H4z', fill:true },                                                                        // base
+        { d:'M2.5 19.5h13V21h-13z', fill:true },                                                                   // socle
+        { d:'M16.6 18.2h4.6a1.4 1.4 0 0 1 0 2.8h-4.6z', fill:true },                                              // tambour tombé
+        { d:'M16.6 18.2a1 1.4 0 1 0 0 2.8a1 1.4 0 1 0 0-2.8z', fill:true },                                       // sa face
+        { d:'M17.6 15.6l.6.5 M20.6 16l.5-.6' }                                                                     // éclats
       ]
     }
   };
@@ -373,15 +604,16 @@
   function stampPaths(key){
     if(svgPathCache[key]) return svgPathCache[key];
     var st=SVG_STAMPS[key]; if(!st) return null;
-    svgPathCache[key]=st.layers.map(function(l){ return { p:new Path2D(l.d), fill:!!l.fill, ink:!!l.ink, stroke:l.stroke!==false }; });
+    svgPathCache[key]=st.layers.map(function(l){ return { p:new Path2D(l.d), fill:!!l.fill, shade:!!l.shade, ink:!!l.ink, stroke:l.stroke!==false, fine:!!l.fine, light:!!l.light, bold:!!l.bold }; });
     return svgPathCache[key];
   }
   function stampMarkup(key){
     var st=SVG_STAMPS[key]; if(!st) return '';
     var h='<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">';
     st.layers.forEach(function(l){
-      var f=l.ink ? 'currentColor' : (l.fill ? 'var(--parchment)' : 'none');
-      h+='<path d="'+l.d+'" fill="'+f+'"'+(l.stroke===false?' stroke="none"':'')+'/>';
+      var f=l.ink ? 'currentColor' : l.shade ? 'var(--parchment-dark)' : (l.fill ? 'var(--parchment)' : 'none');
+      var st2=l.stroke===false ? ' stroke="none"' : (l.fine ? ' stroke-width="0.9"'+(l.light?' stroke="var(--parchment)"':'') : (l.bold ? ' stroke-width="3.6"' : ''));
+      h+='<path d="'+l.d+'" fill="'+f+'"'+st2+'/>';
     });
     return h+'</svg>';
   }
@@ -389,11 +621,20 @@
   var cssVar = function(n,f){ var v=getComputedStyle(document.documentElement).getPropertyValue(n).trim(); return v||f; };
   var PARCHMENT_COLOR = cssVar('--parchment','#ece0c3');
   var INK_COLOR = cssVar('--ink','#241a12');
-  var INK_THICKNESS = 4;
+  var STAMP_SHADE = cssVar('--parchment-dark','#d9c69a');   /* faces à l'ombre des pictos */
+  /* ÉPAISSEURS DE TRAIT UNIFORMES (unités monde) — toute la carte s'aligne sur ces deux valeurs */
+  var LINE_W = 3;          // contours : couloirs, murs, berges, feuillage, portes, escaliers, flèches, pictos
+  var LINE_FINE = 1.5;     // détails : marches, briques, cadre de texte
+  var INK_THICKNESS = LINE_W;
   var WATER_FILL = '#c7d7dd';   /* fond opaque (masque la hachure sous l'eau) */
   var WAVE_COLOR = '#4f7286';   /* trait des vaguelettes */
   var FOLIAGE_FILL = '#9cb37e'; /* vert sourd de la canopée */
+  var SAND_FILL = '#e7d29b';    /* désert : sable doré */
+  var SAND_GRAIN = '#b99a5c';   /* grains de sable */
+    var MEADOW_FILL = '#d3d3a0';  /* prairie : vert-paille clair */
+  var MEADOW_GRASS = '#6f7d45'; /* brins d'herbe */
   var FOLIAGE_DARK = '#5f7346'; /* touffes/points plus foncés */
+  var BRICK_FILL = '#d6c08f';   /* briques : parchemin un ton plus soutenu */
   var HATCH_BAND = 18;     // largeur de la bordure hachurée (unités monde)
 
   var state = { tool:'corridor', icon:'\uD83D\uDC80', svg:'maison', corridorWidth:40 };  // 💀 par défaut
@@ -477,7 +718,7 @@
     c.translate((a.x+b.x)/2,(a.y+b.y)/2); c.rotate(ang);
     c.globalCompositeOperation='source-over';
     c.fillStyle=PARCHMENT_COLOR; c.fillRect(-len/2-3,-depth/2-3,len+6,depth+6);
-    c.strokeStyle=INK_COLOR; c.lineJoin='miter'; c.lineCap='butt'; c.lineWidth=3;
+    c.strokeStyle=INK_COLOR; c.lineJoin='miter'; c.lineCap='butt'; c.lineWidth=LINE_W;
     c.strokeRect(-len/2,-depth/2,len,depth);
     c.beginPath();
     c.moveTo(-len/2,-depth); c.lineTo(-len/2,depth);
@@ -496,7 +737,7 @@
     c.translate((a.x+b.x)/2,(a.y+b.y)/2); c.rotate(ang);
     c.globalCompositeOperation='source-over';
     c.fillStyle=PARCHMENT_COLOR; c.fillRect(-len/2-3,-depth/2-3,len+6,depth+6);
-    c.strokeStyle=INK_COLOR; c.lineJoin='miter'; c.lineCap='butt'; c.lineWidth=3;
+    c.strokeStyle=INK_COLOR; c.lineJoin='miter'; c.lineCap='butt'; c.lineWidth=LINE_W;
     c.setLineDash([5,4]);                      // contour du vantail en pointillés = secret
     c.strokeRect(-len/2,-depth/2,len,depth);
     c.setLineDash([]);
@@ -521,18 +762,18 @@
     c.translate((a.x+b.x)/2,(a.y+b.y)/2); c.rotate(ang);
     c.globalCompositeOperation='source-over';
     c.fillStyle=PARCHMENT_COLOR; c.fillRect(-len/2,-w/2,len,w);   // sol
-    c.strokeStyle=INK_COLOR; c.lineJoin='miter'; c.lineCap='butt'; c.lineWidth=3;
+    c.strokeStyle=INK_COLOR; c.lineJoin='miter'; c.lineCap='butt'; c.lineWidth=LINE_W;
     c.strokeRect(-len/2,-w/2,len,w);                              // contour
     // marches : traits transversaux régulièrement espacés, resserrés vers le "haut" (b)
     var step=12;
-    c.lineWidth=2;
+    c.lineWidth=LINE_FINE;
     c.beginPath();
     for(var x=-len/2+step; x<len/2-1; x+=step){
       c.moveTo(x,-w/2); c.lineTo(x,w/2);
     }
     c.stroke();
     // flèche de montée le long de l'axe (indique le sens vers b)
-    c.strokeStyle=INK_COLOR; c.lineWidth=2; c.lineCap='round'; c.lineJoin='round';
+    c.strokeStyle=INK_COLOR; c.lineWidth=LINE_FINE; c.lineCap='round'; c.lineJoin='round';
     c.beginPath(); c.moveTo(-len/2+6,0); c.lineTo(len/2-8,0); c.stroke();
     c.beginPath();
     c.moveTo(len/2-8,0); c.lineTo(len/2-16,-5); c.moveTo(len/2-8,0); c.lineTo(len/2-16,5);
@@ -553,12 +794,11 @@
     var size=obj.size||40, k=size/24;
     c.save(); c.globalCompositeOperation='source-over';
     c.translate(obj.x-size/2, obj.y-size/2); c.scale(k,k);
-    c.lineWidth=Math.max(1.1, 1.9*Math.sqrt(40/size));   // trait qui reste lisible petit sans devenir pâteux en grand
+    var lw=Math.min(LINE_W, size*0.06)/k, lwf=Math.min(LINE_FINE, size*0.035)/k;   // contours = LINE_W, détails = LINE_FINE
     c.lineCap='round'; c.lineJoin='round';
-    c.strokeStyle=INK_COLOR;
     layers.forEach(function(l){
-      if(l.fill || l.ink){ c.fillStyle = l.ink ? INK_COLOR : PARCHMENT_COLOR; c.fill(l.p); }
-      if(l.stroke) c.stroke(l.p);
+      if(l.fill || l.ink || l.shade){ c.fillStyle = l.ink ? INK_COLOR : l.shade ? STAMP_SHADE : PARCHMENT_COLOR; c.fill(l.p); }
+      if(l.stroke){ c.lineWidth = l.fine ? lwf : l.bold ? lw*2 : lw; c.strokeStyle = l.light ? PARCHMENT_COLOR : INK_COLOR; c.stroke(l.p); }
     });
     c.restore();
   }
@@ -567,7 +807,7 @@
   function paintArrow(c,obj){
     var tip=obj.tip, tail=obj.tail;
     c.save(); c.globalCompositeOperation='source-over';
-    c.strokeStyle=INK_COLOR; c.fillStyle=INK_COLOR; c.lineCap='round'; c.lineJoin='round'; c.lineWidth=3;
+    c.strokeStyle=INK_COLOR; c.fillStyle=INK_COLOR; c.lineCap='round'; c.lineJoin='round'; c.lineWidth=LINE_W;
     c.beginPath(); c.moveTo(tail.x,tail.y); c.lineTo(tip.x,tip.y); c.stroke();
     var ang=Math.atan2(tip.y-tail.y, tip.x-tail.x), hl=16, ha=Math.PI/7;
     c.beginPath();
@@ -590,7 +830,7 @@
     var bw=tw+padX*2, bh=lines.length*lh+padY*2;
     roundRectPath(c, obj.x, obj.y, bw, bh, r);
     c.fillStyle=PARCHMENT_COLOR; c.fill();
-    c.lineWidth=2; c.strokeStyle=INK_COLOR; c.stroke();
+    c.lineWidth=LINE_FINE; c.strokeStyle=INK_COLOR; c.stroke();
     c.fillStyle=INK_COLOR;
     for(var j=0;j<lines.length;j++){ c.fillText(lines[j], obj.x+padX, obj.y+padY+j*lh); }
     c.restore();
@@ -633,40 +873,249 @@
     }
     c.closePath();
   }
-  function paintFoliage(c,o){
-    var pts=o.points; if(!pts||!pts.length) return;
-    var w=o.width, r=w/2;
-    var clumps=foliageClumps(pts, w);
-    function radAt(x,y){ return r*(0.70 + seeded(x,y)*0.28); }
+  /* Feuillage et eau sont peints en PASSES GLOBALES (comme les couloirs) :
+     tous les contours d'abord, puis tous les remplissages par-dessus → les tracés qui se croisent fusionnent. */
+  function foliageRadAt(r,x,y){ return r*(0.70 + seeded(x,y)*0.28); }
+  function foliageGeom(o){
+    if(!o.points||!o.points.length) return null;
+    var r=o.width/2; return { r:r, clumps:foliageClumps(o.points, o.width) };
+  }
+  function foliageStage(c,g,stage){
+    var i,a;
+    if(stage===1){        // 1) contour encre de toutes les touffes
+      c.strokeStyle=INK_COLOR; c.lineWidth=LINE_W*2;   // moitié recouverte par le vert → LINE_W visible
+      for(i=0;i<g.clumps.length;i++){ a=g.clumps[i]; c.beginPath(); leafBlobPath(c, a.x, a.y, foliageRadAt(g.r,a.x,a.y)); c.stroke(); }
+    } else if(stage===2){ // 2) remplissage vert : couvre tous les arcs internes, ne garde que le bord extérieur festonné
+      c.fillStyle=FOLIAGE_FILL;
+      for(i=0;i<g.clumps.length;i++){ a=g.clumps[i]; c.beginPath(); leafBlobPath(c, a.x, a.y, foliageRadAt(g.r,a.x,a.y)); c.fill(); }
+
+    }
+  }
+  function foliagePass(c,list){
+    var gs=[], i, st;
+    for(i=0;i<list.length;i++){ var g=foliageGeom(list[i]); if(g) gs.push(g); }
+    if(!gs.length) return;
     c.save(); c.globalCompositeOperation='source-over'; c.lineJoin='round'; c.lineCap='round';
-    // 1) contour encre de TOUTES les touffes (lobes de feuilles ; sera en partie recouvert)
-    c.strokeStyle=INK_COLOR; c.lineWidth=3;
-    for(var i=0;i<clumps.length;i++){ var a=clumps[i]; c.beginPath(); leafBlobPath(c, a.x, a.y, radAt(a.x,a.y)); c.stroke(); }
-    // 2) remplissage vert par-dessus → ne laisse que le bord EXTÉRIEUR festonné (arcs internes couverts)
-    c.fillStyle=FOLIAGE_FILL;
-    for(var j=0;j<clumps.length;j++){ var b=clumps[j]; c.beginPath(); leafBlobPath(c, b.x, b.y, radAt(b.x,b.y)); c.fill(); }
-    // 3) petites nervures/points plus foncés pour la texture du feuillage
-    c.fillStyle=FOLIAGE_DARK;
-    for(var k=0;k<clumps.length;k++){ var p=clumps[k], s=seeded(p.x*1.7, p.y*0.9); if(s>0.45){ var ox=(seeded(p.x,p.y)-0.5)*r*0.7, oy=(seeded(p.y,p.x)-0.5)*r*0.7; c.beginPath(); c.arc(p.x+ox, p.y+oy, Math.max(1.3, r*0.08), 0, Math.PI*2); c.fill(); } }
+    for(st=1;st<=2;st++){ for(i=0;i<gs.length;i++) foliageStage(c,gs[i],st); }
+    c.restore();
+  }
+  function paintFoliage(c,o){ foliagePass(c,[o]); }
+
+  /* ---- RIVIÈRE : berges encre + eau + reflet, sans hachures (fusion entre tracés) ---- */
+  function riverPass(c,list){
+    var rs=[], i; for(i=0;i<list.length;i++){ if(list[i].points && list[i].points.length>=2) rs.push(list[i]); }
+    if(!rs.length) return;
+    c.save(); c.lineCap='round'; c.lineJoin='round'; c.globalCompositeOperation='source-over';
+    for(i=0;i<rs.length;i++){ corridorPath(c,rs[i].points); c.lineWidth=rs[i].width+LINE_W*2; c.strokeStyle=INK_COLOR; c.stroke(); }   // toutes les berges
+    for(i=0;i<rs.length;i++){ corridorPath(c,rs[i].points); c.lineWidth=rs[i].width; c.strokeStyle=WATER_FILL; c.stroke(); }  // toute l'eau par-dessus
+    var wp=c.createPattern(waveTile,'repeat');
+    if(wp){                                                     // vaguelettes : un seul tracé par largeur → trame continue
+      var byW={}; for(i=0;i<rs.length;i++){ (byW[rs[i].width]=byW[rs[i].width]||[]).push(rs[i]); }
+      Object.keys(byW).forEach(function(w){
+        c.beginPath();
+        byW[w].forEach(function(o){ c.moveTo(o.points[0].x,o.points[0].y); for(var k=1;k<o.points.length;k++) c.lineTo(o.points[k].x,o.points[k].y); });
+        c.lineWidth=+w; c.strokeStyle=wp; c.stroke();
+      });
+    }
+    c.restore();
+  }
+  function paintRiver(c,o){ riverPass(c,[o]); }
+
+  /* ---- PRAIRIE : aplat vert-paille + touffes d'herbes hautes sur une GRILLE MONDE commune
+     → deux zones qui se chevauchent partagent les mêmes touffes : fusion parfaite, pas de double densité ---- */
+  var GRASS_STEP = 24;                         // pas de la grille des touffes
+  /* cellules d'une grille MONDE (pas « step ») couvertes par un tracé peint — partagées par tous les tracés du même type */
+  var gridCache = (typeof WeakMap!=='undefined') ? new WeakMap() : null;
+  function gridCells(o, step, margin, salt){
+    var pts=o.points, n=pts.length, ck=step+':'+salt, all=gridCache && gridCache.get(o);
+    if(all && all[ck] && all[ck].n===n && all[ck].w===o.width) return all[ck].cells;
+    var cells={}, r=o.width/2, lim=r-margin, i, gx, gy;
+    for(i=0;i<n;i++){
+      var a=pts[i], b=pts[i+1]||a;
+      var x0=Math.floor((Math.min(a.x,b.x)-r)/step), x1=Math.ceil((Math.max(a.x,b.x)+r)/step);
+      var y0=Math.floor((Math.min(a.y,b.y)-r)/step), y1=Math.ceil((Math.max(a.y,b.y)+r)/step);
+      for(gx=x0;gx<=x1;gx++) for(gy=y0;gy<=y1;gy++){
+        var key=gx+','+gy; if(cells[key]) continue;
+        var px=(gx+(seeded(gx*1.31+salt,gy*0.77)-0.5)*0.8)*step, py=(gy+(seeded(gy*1.13,gx*0.59+salt)-0.5)*0.8)*step;
+        if(distToSeg({x:px,y:py},a,b)<=lim) cells[key]={x:px,y:py};
+      }
+    }
+    if(gridCache){ if(!all){ all={}; gridCache.set(o,all); } all[ck]={n:n,w:o.width,cells:cells}; }
+    return cells;
+  }
+  function meadowTufts(o){ return gridCells(o, GRASS_STEP, 2, 0); }
+  function paintTuft(c,t){
+    var s1=seeded(t.x,t.y), blades=3+Math.floor(s1*3);
+    for(var k=0;k<blades;k++){
+      var sk=seeded(t.x+k*3.7, t.y-k*2.3);
+      var bx=t.x+(sk-0.5)*7, L=9+seeded(t.y+k, t.x-k)*8;                 // herbes HAUTES : 9 à 17
+      var lean=0.32+(seeded(t.x*0.5+k, t.y*0.5)-0.5)*0.6;                 // couchées par le vent, vers la droite
+      c.moveTo(bx,t.y);
+      c.quadraticCurveTo(bx+lean*L*0.15, t.y-L*0.65, bx+lean*L, t.y-L);
+    }
+  }
+  function meadowPass(c,list){
+    var ms=[], i, k; for(i=0;i<list.length;i++){ if(list[i].points && list[i].points.length) ms.push(list[i]); }
+    if(!ms.length) return;
+    c.save(); c.globalCompositeOperation='source-over'; c.lineCap='round'; c.lineJoin='round';
+    c.fillStyle=MEADOW_FILL; c.strokeStyle=MEADOW_FILL;                  // 1) aplat (sans contour : sol doux)
+    for(i=0;i<ms.length;i++){
+      var pts=ms[i].points;
+      if(pts.length===1){ c.beginPath(); c.arc(pts[0].x,pts[0].y,ms[i].width/2,0,Math.PI*2); c.fill(); }
+      else { corridorPath(c,pts); c.lineWidth=ms[i].width; c.stroke(); }
+    }
+    var all={};                                                           // 2) touffes : union des cellules
+    for(i=0;i<ms.length;i++){ var cl=meadowTufts(ms[i]); for(k in cl) all[k]=cl[k]; }
+    c.strokeStyle=MEADOW_GRASS; c.lineWidth=LINE_FINE;
+    c.beginPath(); for(k in all){ var tf=all[k]; if(seeded(tf.x*0.61,tf.y*0.83)<0.65) paintTuft(c,tf); } c.stroke();   // ~2 cases sur 3 : touffes éparses
+    c.restore();
+  }
+  function paintMeadow(c,o){ meadowPass(c,[o]); }
+
+  /* ---- DÉSERT : aplat de sable + grains fins (grille monde commune → fusion sans raccord) ---- */
+  var SAND_GRAIN_STEP = 9;
+  function desertPass(c,list){
+    var ds=[], i, k; for(i=0;i<list.length;i++){ if(list[i].points && list[i].points.length) ds.push(list[i]); }
+    if(!ds.length) return;
+    c.save(); c.globalCompositeOperation='source-over'; c.lineCap='round'; c.lineJoin='round';
+    c.fillStyle=SAND_FILL; c.strokeStyle=SAND_FILL;                     // 1) aplat de sable, sans contour
+    for(i=0;i<ds.length;i++){
+      var pts=ds[i].points;
+      if(pts.length===1){ c.beginPath(); c.arc(pts[0].x,pts[0].y,ds[i].width/2,0,Math.PI*2); c.fill(); }
+      else { corridorPath(c,pts); c.lineWidth=ds[i].width; c.stroke(); }
+    }
+    var grains={};
+    for(i=0;i<ds.length;i++){
+      var g=gridCells(ds[i], SAND_GRAIN_STEP, 1, 3); for(k in g) grains[k]=g[k];
+    }
+    c.fillStyle=SAND_GRAIN; c.beginPath();                               // 2) grains de sable épars
+    for(k in grains){ var p=grains[k]; if(seeded(p.x*2.1,p.y*1.7)<0.55){ var rr=0.6+seeded(p.y,p.x)*0.6; c.moveTo(p.x+rr,p.y); c.arc(p.x,p.y,rr,0,Math.PI*2); } }
+    c.fill();
+    c.restore();
+  }
+  function paintDesert(c,o){ desertPass(c,[o]); }
+
+  /* ---- PLANCHER : motif de lames de bois tuilé dans l'espace MONDE (fusion parfaite, pas de raccord) ---- */
+  /* style « encre » : fond parchemin à peine teinté, rainures et raccords à l'encre, quelques traits de veinage */
+  var WOOD_FILL='#e4d5b1';
+  var woodTile=null, WOOD_TS=2;                                       // tuile dessinée en x2 pour rester nette au zoom
+  function buildWoodTile(){
+    var TW=200, TH=80, BH=16, S=WOOD_TS;                              // 5 lames de 16 de haut, tuile 200 × 80
+    woodTile=document.createElement('canvas'); woodTile.width=TW*S; woodTile.height=TH*S;
+    var t=woodTile.getContext('2d'); t.scale(S,S);
+    t.fillStyle=WOOD_FILL; t.fillRect(0,0,TW,TH);
+    var offs=[0,120,52,160,86];                                       // raccords décalés d'une lame à l'autre
+    t.strokeStyle=INK_COLOR; t.lineCap='round';
+    for(var r=0;r<5;r++){
+      var y=r*BH;
+      t.lineWidth=LINE_FINE;                                          // rainure entre deux lames
+      t.beginPath(); t.moveTo(0,y); t.lineTo(TW,y); t.stroke();
+      t.lineWidth=LINE_FINE*0.9;                                      // raccord de bout de lame
+      var jx=offs[r]; t.beginPath(); t.moveTo(jx,y); t.lineTo(jx,y+BH); t.stroke();
+      t.lineWidth=0.7; t.globalAlpha=0.55;                            // 2 ou 3 traits de veinage, courts et sobres
+      for(var g=0; g<3; g++){
+        var gx=(offs[r]+18+g*58+seeded(r*2.3,g*1.9)*20)%TW, gy=y+5+seeded(g*3.1,r*1.3)*6, gl=14+seeded(r,g)*18;
+        if(gx+gl>TW) gx=TW-gl-2;
+        t.beginPath(); t.moveTo(gx,gy); t.quadraticCurveTo(gx+gl*0.5, gy-1, gx+gl, gy); t.stroke();
+      }
+      t.globalAlpha=1;
+    }
+  }
+  function woodPass(c,list){
+    var ws=[], i; for(i=0;i<list.length;i++){ if(list[i].points && list[i].points.length) ws.push(list[i]); }
+    if(!ws.length) return;
+    if(!woodTile) buildWoodTile();
+    var pat=c.createPattern(woodTile,'repeat'); if(!pat) return;
+    if(pat.setTransform && typeof DOMMatrix!=='undefined') pat.setTransform(new DOMMatrix().scale(1/WOOD_TS));
+    c.save(); c.globalCompositeOperation='source-over'; c.lineCap='round'; c.lineJoin='round';
+    c.strokeStyle=pat; c.fillStyle=pat;
+    var byW={};                                                       // un seul tracé par largeur → pas de liseré aux recouvrements
+    for(i=0;i<ws.length;i++){
+      var pts=ws[i].points;
+      if(pts.length===1){ c.beginPath(); c.arc(pts[0].x,pts[0].y,ws[i].width/2,0,Math.PI*2); c.fill(); }
+      else (byW[ws[i].width]=byW[ws[i].width]||[]).push(pts);
+    }
+    Object.keys(byW).forEach(function(w){
+      c.beginPath();
+      byW[w].forEach(function(pts){ c.moveTo(pts[0].x,pts[0].y); for(var k=1;k<pts.length;k++) c.lineTo(pts[k].x,pts[k].y); });
+      c.lineWidth=+w; c.stroke();
+    });
+    c.restore();
+  }
+  function paintWood(c,o){ woodPass(c,[o]); }
+
+  /* ---- CRAYON : trait d'encre libre, lissé (courbes par les milieux) ---- */
+  function pencilWidth(o){ return Math.max(1, (o.width||40)*LINE_W/40); }
+  function paintPencil(c,o){
+    var pts=o.points; if(!pts||!pts.length) return;
+    c.save(); c.globalCompositeOperation='source-over';
+    c.lineCap='round'; c.lineJoin='round'; c.strokeStyle=INK_COLOR; c.fillStyle=INK_COLOR; c.lineWidth=pencilWidth(o);
+    if(pts.length===1){ c.beginPath(); c.arc(pts[0].x,pts[0].y,pencilWidth(o)/2,0,Math.PI*2); c.fill(); c.restore(); return; }
+    c.beginPath(); c.moveTo(pts[0].x,pts[0].y);
+    for(var i=1;i<pts.length-1;i++){ var mx=(pts[i].x+pts[i+1].x)/2, my=(pts[i].y+pts[i+1].y)/2; c.quadraticCurveTo(pts[i].x,pts[i].y,mx,my); }
+    c.lineTo(pts[pts.length-1].x,pts[pts.length-1].y); c.stroke();
     c.restore();
   }
 
-  /* ---- RIVIÈRE : berges encre + eau + reflet, sans hachures ---- */
-  function paintRiver(c,o){
-    var pts=o.points; if(!pts||pts.length<2) return;
-    var w=o.width;
-    c.save(); c.lineCap='round'; c.lineJoin='round'; c.globalCompositeOperation='source-over';
-    corridorPath(c,pts);
-    c.lineWidth=w+3; c.strokeStyle=INK_COLOR; c.stroke();          // berges encre
-    c.lineWidth=w;   c.strokeStyle=WATER_FILL; c.stroke();         // fond opaque (masque la hachure)
-    var wp=c.createPattern(waveTile,'repeat');
-    if(wp){ c.lineWidth=w; c.strokeStyle=wp; c.stroke(); }         // vaguelettes en trame
+  /* ---- MUR : bande encre + remplissage + briques éparses (fusion entre murs) ---- */
+  function wallThick(o){ return Math.max(8, (o.width||40)*0.4); }
+  function wallPath(c,pts){ c.beginPath(); c.moveTo(pts[0].x,pts[0].y); for(var i=1;i<pts.length;i++) c.lineTo(pts[i].x,pts[i].y); }
+  function wallBricks(c,o){
+    var th=wallThick(o), pts=o.points, bh=th*0.30, bl=th*0.62, gap=th*0.08;
+    c.lineWidth=LINE_FINE; c.strokeStyle=INK_COLOR; c.fillStyle=BRICK_FILL;
+    for(var i=1;i<pts.length;i++){
+      var a=pts[i-1], b=pts[i], dx=b.x-a.x, dy=b.y-a.y, L=Math.hypot(dx,dy); if(L<1) continue;
+      var ang=Math.atan2(dy,dx), step=bl+gap, n=Math.floor((L-th*0.3)/step);
+      c.save(); c.translate(a.x,a.y); c.rotate(ang);
+      for(var row=0;row<2;row++){                          // deux assises, décalées d'une demi-brique
+        var yy=(row===0 ? -bh-gap/2 : gap/2), off=row ? step/2 : 0;
+        for(var k=0;k<=n;k++){
+          var x=th*0.15+off+k*step; if(x+bl>L-th*0.15) break;
+          var sx=a.x+Math.cos(ang)*x, sy=a.y+Math.sin(ang)*x;
+          if(seeded(sx*0.37+row*13.1, sy*0.53-row*7.7) > 0.42) continue;   // ÉPARSE : ~40 % des briques
+          var jx=(seeded(sx,sy+row)-0.5)*gap*1.5;
+          c.beginPath(); c.rect(x+jx, yy, bl, bh); c.fill(); c.stroke();
+        }
+      }
+      c.restore();
+    }
+  }
+  /* ombre portée : peinte opaque sur un calque, puis posée en transparence → les ombres qui se croisent ne s'additionnent pas */
+  var WALL_SHADOW_ALPHA = 0.26;
+  var shadowLayer = document.createElement('canvas'), shadowCtx = shadowLayer.getContext('2d');
+  function wallShadows(c,ws){
+    var W=c.canvas.width, H=c.canvas.height;
+    if(shadowLayer.width!==W || shadowLayer.height!==H){ shadowLayer.width=W; shadowLayer.height=H; }
+    shadowCtx.setTransform(1,0,0,1,0,0); shadowCtx.clearRect(0,0,W,H);
+    shadowCtx.setTransform(c.getTransform());
+    shadowCtx.lineJoin='miter'; shadowCtx.miterLimit=4; shadowCtx.lineCap='square'; shadowCtx.strokeStyle=INK_COLOR;
+    for(var i=0;i<ws.length;i++){
+      var th=wallThick(ws[i]), off=Math.max(3, th*0.35);              // lumière du haut-gauche → ombre vers le bas-droite
+      shadowCtx.save(); shadowCtx.translate(off,off);
+      wallPath(shadowCtx,ws[i].points); shadowCtx.lineWidth=th+LINE_W*2; shadowCtx.stroke();
+      shadowCtx.restore();
+    }
+    c.save(); c.setTransform(1,0,0,1,0,0); c.globalAlpha=WALL_SHADOW_ALPHA; c.globalCompositeOperation='source-over';
+    c.drawImage(shadowLayer,0,0); c.restore();
+  }
+  function wallPass(c,list){
+    var ws=[], i; for(i=0;i<list.length;i++){ if(list[i].points && list[i].points.length>=2) ws.push(list[i]); }
+    if(!ws.length) return;
+    wallShadows(c,ws);                                                 // 0) ombres portées, sous tous les murs
+    c.save(); c.globalCompositeOperation='source-over'; c.lineJoin='miter'; c.miterLimit=4; c.lineCap='square';
+    for(i=0;i<ws.length;i++){ wallPath(c,ws[i].points); c.lineWidth=wallThick(ws[i])+LINE_W*2; c.strokeStyle=INK_COLOR; c.stroke(); }   // tous les contours
+    for(i=0;i<ws.length;i++){ wallPath(c,ws[i].points); c.lineWidth=wallThick(ws[i]); c.strokeStyle=PARCHMENT_COLOR; c.stroke(); }        // tous les intérieurs
+    for(i=0;i<ws.length;i++){ wallBricks(c,ws[i]); }                                                                                    // briques
     c.restore();
   }
   function paintActive(c,obj){
     if(obj.type==='corridor') paintCorridorPreview(c,obj);
     else if(obj.type==='river') paintRiver(c,obj);
     else if(obj.type==='foliage') paintFoliage(c,obj);
+    else if(obj.type==='pencil') paintPencil(c,obj);
+    else if(obj.type==='meadow') paintMeadow(c,obj);
+    else if(obj.type==='desert') paintDesert(c,obj);
+    else if(obj.type==='wood') paintWood(c,obj);
     else if(obj.type==='door') paintDoor(c,obj);
     else if(obj.type==='secret') paintSecret(c,obj);
     else if(obj.type==='stairs') paintStairs(c,obj);
@@ -690,13 +1139,18 @@
     sctx.clearRect(0,0,scene.width,scene.height);
     sctx.setTransform(view.scale,0,0,view.scale,view.ox,view.oy);
     var i,o;
+    desertPass(sctx, objects.filter(function(q){ return q.type==='desert'; }));
+    meadowPass(sctx, objects.filter(function(q){ return q.type==='meadow'; }));   // sol : sous tout le reste
+    woodPass(sctx, objects.filter(function(q){ return q.type==='wood'; }));
     corridorHaloPass(sctx);
-    for(i=0;i<objects.length;i++){ o=objects[i]; if(o.type==='river') paintRiver(sctx,o); }
+    riverPass(sctx, objects.filter(function(q){ return q.type==='river'; }));
     corridorBodyPass(sctx);
-    for(i=0;i<objects.length;i++){ o=objects[i]; if(o.type==='foliage') paintFoliage(sctx,o); }
+    foliagePass(sctx, objects.filter(function(q){ return q.type==='foliage'; }));
+    wallPass(sctx, objects.filter(function(q){ return q.type==='wall'; }));
     for(i=0;i<objects.length;i++){ o=objects[i]; if(o.type==='stairs') paintStairs(sctx,o); }
     for(i=0;i<objects.length;i++){ o=objects[i]; if(o.type==='door') paintDoor(sctx,o); }
     for(i=0;i<objects.length;i++){ o=objects[i]; if(o.type==='secret') paintSecret(sctx,o); }
+    for(i=0;i<objects.length;i++){ o=objects[i]; if(o.type==='pencil') paintPencil(sctx,o); }
     for(i=0;i<objects.length;i++){ o=objects[i]; if(o.type==='icon') paintIcon(sctx,o); }
     for(i=0;i<objects.length;i++){ o=objects[i]; if(o.type==='svg') paintSvgStamp(sctx,o); }
     for(i=0;i<objects.length;i++){ o=objects[i]; if(o.type==='arrow') paintArrow(sctx,o); }
@@ -740,6 +1194,11 @@
     return d;
   }
   function hitObject(o,p){
+    if(o.type==='wood'){ return distToPolyline(p,o.points) <= o.width/2; }
+    if(o.type==='desert'){ return distToPolyline(p,o.points) <= o.width/2; }
+    if(o.type==='meadow'){ return distToPolyline(p,o.points) <= o.width/2; }
+    if(o.type==='pencil'){ return distToPolyline(p,o.points) <= pencilWidth(o)/2 + 6; }
+    if(o.type==='wall'){ return distToPolyline(p,o.points) <= wallThick(o)/2 + 6; }
     if(o.type==='corridor' || o.type==='river' || o.type==='foliage'){ return distToPolyline(p,o.points) <= (o.width/2 + 8); }
     if(o.type==='door' || o.type==='secret' || o.type==='stairs'){ return distToSeg(p,o.a,o.b) <= ((o.width? o.width/2:0) + 20); }
     if(o.type==='arrow'){ return distToSeg(p,o.tip,o.tail) <= 12; }
@@ -818,7 +1277,37 @@
   var panning=false, panStart=null, panOrig=null;
   var arrowTip=null;
 
+  /* mur en cours : polyligne droite construite clic par clic */
+  var wallDraft=null, wallHover=null;
+  function wallSnap(p){                       // Maj enfoncée = angle bloqué par pas de 45°
+    if(!wallDraft || !wallShift) return p;
+    var a=wallDraft.points[wallDraft.points.length-1], dx=p.x-a.x, dy=p.y-a.y;
+    var ang=Math.round(Math.atan2(dy,dx)/(Math.PI/4))*(Math.PI/4), L=Math.hypot(dx,dy);
+    return { x:a.x+Math.cos(ang)*L, y:a.y+Math.sin(ang)*L };
+  }
+  var wallShift=false, wallEnd=null;
+  function wallRender(){
+    if(wallDraft){
+      var tmp={type:'wall', width:wallDraft.width, points:wallDraft.points.slice()};
+      if(wallHover) tmp.points.push(wallHover);
+      objects.push(tmp); renderScene(); objects.pop();
+      paint();
+      // repère du point courant
+      ctx.setTransform(view.scale,0,0,view.scale,view.ox,view.oy);
+      var last=wallDraft.points[wallDraft.points.length-1];
+      ctx.beginPath(); ctx.arc(last.x,last.y,4/view.scale,0,Math.PI*2); ctx.fillStyle=cssVar('--red','#8c2f1f'); ctx.fill();
+      ctx.setTransform(1,0,0,1,0,0);
+    } else { renderScene(); paint(); }
+  }
+  function finishWall(){
+    if(!wallDraft) return;
+    var w=wallDraft; wallDraft=null; wallHover=null;
+    var lp=w.points[w.points.length-1]; wallEnd={x:lp.x, y:lp.y, t:performance.now()};
+    if(w.points.length>=2) commit(w); else { renderScene(); paint(); }
+  }
+  var wallRaf=0;
   function onDown(e){
+    if(e.button===2 && state.tool==='wall'){ e.preventDefault(); finishWall(); return; }
     if(e.button===1){ e.preventDefault(); panning=true; panStart=getScreenPos(e); panOrig={ox:view.ox,oy:view.oy}; canvas.style.cursor='grabbing'; return; }
     if(e.button===2) return;
     if(activeTextInput) return;
@@ -833,14 +1322,28 @@
       else { commit({type:'arrow', tip:arrowTip, tail:wp}); arrowTip=null; }
       return;
     }
+    if(state.tool==='wall'){
+      if(!wallDraft){
+        if(wallEnd && performance.now()-wallEnd.t<450 && Math.hypot(wp.x-wallEnd.x, wp.y-wallEnd.y)<10/view.scale) return;   // 2e clic du double-clic de fin : ignoré
+        wallDraft={type:'wall', width:state.corridorWidth, points:[wp]}; wallShift=!!e.shiftKey; wallHover=null; wallRender(); return; }
+      wallShift=!!e.shiftKey; wp=wallSnap(wp);
+      var lp=wallDraft.points[wallDraft.points.length-1];
+      if(Math.hypot(wp.x-lp.x, wp.y-lp.y) < 8/view.scale){ finishWall(); return; }   // re-clic au même endroit (double-clic) = fin
+      wallDraft.points.push(wp); wallHover=null; wallRender(); return;
+    }
     if(state.tool==='door' || state.tool==='secret'){ drawing=true; doorA=wp; return; }
     if(state.tool==='stairs'){ drawing=true; doorA=wp; return; }
-    var strokeType=(state.tool==='river')?'river':(state.tool==='foliage')?'foliage':'corridor';
+    var strokeType=(state.tool==='river')?'river':(state.tool==='foliage')?'foliage':(state.tool==='pencil')?'pencil':(state.tool==='meadow')?'meadow':(state.tool==='desert')?'desert':(state.tool==='wood')?'wood':'corridor';
     drawing=true; curStroke={type:strokeType, points:[wp], width:state.corridorWidth};
   }
   function onMove(e){
     if(panning){ e.preventDefault(); var s=getScreenPos(e); view.ox=panOrig.ox+(s.x-panStart.x); view.oy=panOrig.oy+(s.y-panStart.y); paint(); return; }
     if(state.tool==='arrow' && arrowTip!==null){ paint({type:'arrow', tip:arrowTip, tail:toWorld(getScreenPos(e))}); return; }
+    if(state.tool==='wall' && wallDraft){
+      wallShift=!!e.shiftKey; wallHover=wallSnap(toWorld(getScreenPos(e)));
+      if(!wallRaf) wallRaf=requestAnimationFrame(function(){ wallRaf=0; wallRender(); });
+      return;
+    }
     if(!drawing) return;
     if(e.cancelable) e.preventDefault();
     var wp=toWorld(getScreenPos(e));
@@ -849,8 +1352,20 @@
     if(state.tool==='secret'){ paint({type:'secret', a:doorA, b:wp}); return; }
     if(state.tool==='stairs'){ paint({type:'stairs', a:doorA, b:wp, width:state.corridorWidth}); return; }
     var last=curStroke.points[curStroke.points.length-1];
-    if(Math.hypot(wp.x-last.x, wp.y-last.y) > 5/view.scale){ curStroke.points.push(wp); }
-    paint(curStroke);
+    var minStep=(curStroke.type==='pencil' ? 1.5 : 5)/view.scale;     // crayon : échantillonnage fin pour un trait souple
+    if(Math.hypot(wp.x-last.x, wp.y-last.y) > minStep){ curStroke.points.push(wp); }
+    livePreview();
+  }
+  /* aperçu FUSIONNÉ pendant le tracé : on rend la scène avec le tracé en cours inclus (1 fois par frame) */
+  var liveRaf=0;
+  function livePreview(){
+    if(liveRaf) return;
+    liveRaf=requestAnimationFrame(function(){
+      liveRaf=0;
+      if(!curStroke){ return; }
+      objects.push(curStroke); renderScene(); objects.pop();
+      paint();
+    });
   }
   function onUp(e){
     if(panning){ panning=false; canvas.style.cursor=cursorFor(state.tool); renderScene(); paint(); return; }
@@ -860,8 +1375,8 @@
     if(state.tool==='door'){ var wp=toWorld(getScreenPos(e)); commit({type:'door', a:doorA, b:wp}); doorA=null; return; }
     if(state.tool==='secret'){ var wps=toWorld(getScreenPos(e)); commit({type:'secret', a:doorA, b:wps}); doorA=null; return; }
     if(state.tool==='stairs'){ var wpt=toWorld(getScreenPos(e)); commit({type:'stairs', a:doorA, b:wpt, width:state.corridorWidth}); doorA=null; return; }
-    if(curStroke && curStroke.type==='foliage' && curStroke.points.length>=1){ commit(curStroke); }
-    else if(curStroke && curStroke.points.length>=2){ commit(curStroke); } else { paint(); }
+    if(curStroke && (curStroke.type==='foliage' || curStroke.type==='pencil' || curStroke.type==='meadow' || curStroke.type==='desert' || curStroke.type==='wood') && curStroke.points.length>=1){ commit(curStroke); }
+    else if(curStroke && curStroke.points.length>=2){ commit(curStroke); } else { renderScene(); paint(); }
     curStroke=null;
   }
   function onWheel(e){
@@ -917,15 +1432,28 @@
 
   document.addEventListener('keydown', function(e){
     if(e.key==='Escape' && arrowTip!==null){ arrowTip=null; paint(); return; }
-    if((e.ctrlKey || e.metaKey) && (e.key==='z' || e.key==='Z')){ e.preventDefault(); undo(); }
+    if(wallDraft && (e.key==='Escape' || e.key==='Enter')){ e.preventDefault(); finishWall(); return; }
+    if((e.ctrlKey || e.metaKey) && (e.key==='z' || e.key==='Z')){
+      e.preventDefault();
+      if(wallDraft){ wallDraft.points.pop(); if(!wallDraft.points.length){ wallDraft=null; wallHover=null; } wallRender(); return; }   // retire le dernier point du mur en cours
+      undo();
+    }
   });
 
   /* ---- outils ---- */
   function setTool(name){
+    if(wallDraft && name!=='wall') finishWall();
     state.tool=name; removeTextInput(); arrowTip=null;
-    [toolCorridorBtn,toolRiverBtn,toolFoliageBtn,toolDoorBtn,toolSecretBtn,toolStairsBtn,toolTextBtn,toolArrowBtn,toolIconBtn,toolSvgBtn,toolEraserBtn].forEach(function(b){ if(b) b.classList.remove('active'); });
-    var m={corridor:toolCorridorBtn, river:toolRiverBtn, foliage:toolFoliageBtn, door:toolDoorBtn, secret:toolSecretBtn, stairs:toolStairsBtn, text:toolTextBtn, arrow:toolArrowBtn, icon:toolIconBtn, svg:toolSvgBtn, eraser:toolEraserBtn};
+    [toolCorridorBtn,toolRiverBtn,toolFoliageBtn,toolDoorBtn,toolSecretBtn,toolStairsBtn,toolTextBtn,toolArrowBtn,toolIconBtn,toolSvgBtn,toolEraserBtn,toolPathBtn,toolNoteBtn,toolWallBtn,toolPencilBtn,toolMeadowBtn,toolDesertBtn,toolWoodBtn].forEach(function(b){ if(b) b.classList.remove('active'); });
+    var m={pencil:toolPencilBtn, corridor:toolCorridorBtn, river:toolRiverBtn, foliage:toolFoliageBtn, meadow:toolMeadowBtn, desert:toolDesertBtn, wood:toolWoodBtn, wall:toolWallBtn, door:toolDoorBtn, secret:toolSecretBtn, stairs:toolStairsBtn, text:toolTextBtn, arrow:toolArrowBtn, icon:toolIconBtn, svg:toolSvgBtn, eraser:toolEraserBtn};
     if(m[name]) m[name].classList.add('active');
+    DROP_GROUPS.forEach(function(g){           // l'outil appartient à un menu : son bouton prend l'icône
+      var it=g.tools[name]; if(!it || !g.btn) return;
+      g.btn.classList.add('active');
+      var cp=g.btn.querySelector('.cur-path'), pi=it.querySelector('.pi');
+      if(cp && pi) cp.innerHTML=pi.innerHTML;
+      g.btn.title=g.label+' : '+it.querySelector('.pl').firstChild.textContent.trim()+' (cliquer pour changer)';
+    });
     canvas.style.cursor=cursorFor(name);
     if(initialized) paint();
   }
@@ -934,11 +1462,24 @@
   clearBtn.addEventListener('click', function(){ showMessage("Effacer le parchemin","Voulez-vous jeter ce parchemin au feu ?", true, clearAll); });
   saveBtn.addEventListener('click', exportPNG);
 
-  if(toolCorridorBtn) toolCorridorBtn.addEventListener('click', function(){ setTool('corridor'); });
-  if(toolRiverBtn) toolRiverBtn.addEventListener('click', function(){ setTool('river'); });
-  if(toolFoliageBtn) toolFoliageBtn.addEventListener('click', function(){ setTool('foliage'); });
-  if(toolDoorBtn)     toolDoorBtn.addEventListener('click', function(){ setTool('door'); });
-  if(toolSecretBtn)   toolSecretBtn.addEventListener('click', function(){ setTool('secret'); });
+  function closeMenus(except){ [iconMenu, svgMenu, pathMenu, noteMenu].forEach(function(mn){ if(mn && mn!==except) mn.classList.remove('show'); }); }
+  function openMenu(btn, menu, mw){
+    closeMenus(menu);
+    if(menu.classList.contains('show')){ menu.classList.remove('show'); return; }
+    var r=btn.getBoundingClientRect();
+    menu.style.left=Math.max(8, Math.min(r.left, window.innerWidth-mw-8))+'px';
+    menu.style.top=(r.bottom+6)+'px';
+    menu.style.maxHeight=(window.innerHeight-r.bottom-16)+'px';
+    menu.classList.add('show');
+  }
+  DROP_GROUPS.forEach(function(g){
+    if(!g.btn || !g.menu) return;
+    g.btn.addEventListener('click', function(e){ e.stopPropagation(); openMenu(g.btn, g.menu, 256); });
+    g.menu.addEventListener('click', function(e){ e.stopPropagation(); });
+    Object.keys(g.tools).forEach(function(k){
+      var b=g.tools[k]; if(b) b.addEventListener('click', function(){ setTool(k); g.menu.classList.remove('show'); });
+    });
+  });
   if(toolStairsBtn)   toolStairsBtn.addEventListener('click', function(){ setTool('stairs'); });
   if(toolEraserBtn)   toolEraserBtn.addEventListener('click', function(){ setTool('eraser'); });
   if(toolTextBtn)     toolTextBtn.addEventListener('click', function(){ setTool('text'); });
@@ -946,7 +1487,7 @@
   if(toolIconBtn) toolIconBtn.addEventListener('click', function(e){
     e.stopPropagation();
     if(!iconMenu) return;
-    if(svgMenu) svgMenu.classList.remove('show');
+    closeMenus(iconMenu);
     if(iconMenu.classList.contains('show')){ iconMenu.classList.remove('show'); return; }
     var r=toolIconBtn.getBoundingClientRect();
     var mw=Math.min(340, window.innerWidth*0.92);
@@ -993,7 +1534,7 @@
   if(toolSvgBtn) toolSvgBtn.addEventListener('click', function(e){
     e.stopPropagation();
     if(!svgMenu) return;
-    if(iconMenu) iconMenu.classList.remove('show');
+    closeMenus(svgMenu);
     if(svgMenu.classList.contains('show')){ svgMenu.classList.remove('show'); return; }
     var r=toolSvgBtn.getBoundingClientRect();
     var mw=Math.min(340, window.innerWidth*0.92);
@@ -1002,7 +1543,7 @@
     svgMenu.style.maxHeight=(window.innerHeight-r.bottom-16)+'px';
     svgMenu.classList.add('show');
   });
-  document.addEventListener('click', function(){ if(iconMenu) iconMenu.classList.remove('show'); if(svgMenu) svgMenu.classList.remove('show'); });
+  document.addEventListener('click', function(){ closeMenus(null); });
   setTool('corridor');
 
   /* ---- export PNG (toute la carte, à l'échelle 1) ---- */
@@ -1014,6 +1555,11 @@
       var o=objects[i];
       if(o.type==='corridor'){ var r=o.width/2+INK_THICKNESS+HATCH_BAND+4; for(var k=0;k<o.points.length;k++){ ext(o.points[k].x,o.points[k].y,r); } }
       else if(o.type==='river'){ var rr=o.width/2+6; for(var kr=0;kr<o.points.length;kr++){ ext(o.points[kr].x,o.points[kr].y,rr); } }
+      else if(o.type==='wood'){ var rwd=o.width/2+2; for(var kwd=0;kwd<o.points.length;kwd++){ ext(o.points[kwd].x,o.points[kwd].y,rwd); } }
+      else if(o.type==='desert'){ var rd=o.width/2+2; for(var kd=0;kd<o.points.length;kd++){ ext(o.points[kd].x,o.points[kd].y,rd); } }
+      else if(o.type==='meadow'){ var rm=o.width/2+4; for(var km=0;km<o.points.length;km++){ ext(o.points[km].x,o.points[km].y-18,rm); ext(o.points[km].x+6,o.points[km].y,rm); } }
+      else if(o.type==='pencil'){ var rp=pencilWidth(o)/2+4; for(var kp=0;kp<o.points.length;kp++){ ext(o.points[kp].x,o.points[kp].y,rp); } }
+      else if(o.type==='wall'){ var rw=wallThick(o)*0.85+8; for(var kw=0;kw<o.points.length;kw++){ ext(o.points[kw].x,o.points[kw].y,rw); } }
       else if(o.type==='foliage'){ var rf=o.width/2+4; for(var kf=0;kf<o.points.length;kf++){ ext(o.points[kf].x,o.points[kf].y,rf); } }
       else if(o.type==='door' || o.type==='secret'){ ext(o.a.x,o.a.y,30); ext(o.b.x,o.b.y,30); }
       else if(o.type==='stairs'){ var sr=(o.width||40); ext(o.a.x,o.a.y,sr); ext(o.b.x,o.b.y,sr); }
@@ -1030,21 +1576,28 @@
       var tmp=document.createElement('canvas');
       tmp.width=Math.round(b.w+pad*2); tmp.height=Math.round(b.h+pad*2);
       var tctx=tmp.getContext('2d');
-      tctx.fillStyle=PARCHMENT_COLOR; tctx.fillRect(0,0,tmp.width,tmp.height);
       tctx.setTransform(1,0,0,1, pad-b.minX, pad-b.minY);
       var i,o;
-      corridorHaloPass(tctx);
-      for(i=0;i<objects.length;i++){ o=objects[i]; if(o.type==='river') paintRiver(tctx,o); }
+      desertPass(tctx, objects.filter(function(q){ return q.type==='desert'; }));
+    meadowPass(tctx, objects.filter(function(q){ return q.type==='meadow'; }));   // sol : sous tout le reste
+    woodPass(tctx, objects.filter(function(q){ return q.type==='wood'; }));
+    corridorHaloPass(tctx);
+      riverPass(tctx, objects.filter(function(q){ return q.type==='river'; }));
       corridorBodyPass(tctx);
-      for(i=0;i<objects.length;i++){ o=objects[i]; if(o.type==='foliage') paintFoliage(tctx,o); }
+      foliagePass(tctx, objects.filter(function(q){ return q.type==='foliage'; }));
+    wallPass(tctx, objects.filter(function(q){ return q.type==='wall'; }));
       for(i=0;i<objects.length;i++){ o=objects[i]; if(o.type==='stairs') paintStairs(tctx,o); }
       for(i=0;i<objects.length;i++){ o=objects[i]; if(o.type==='door') paintDoor(tctx,o); }
       for(i=0;i<objects.length;i++){ o=objects[i]; if(o.type==='secret') paintSecret(tctx,o); }
-      for(i=0;i<objects.length;i++){ o=objects[i]; if(o.type==='icon') paintIcon(tctx,o); }
+      for(i=0;i<objects.length;i++){ o=objects[i]; if(o.type==='pencil') paintPencil(tctx,o); }
+    for(i=0;i<objects.length;i++){ o=objects[i]; if(o.type==='icon') paintIcon(tctx,o); }
       for(i=0;i<objects.length;i++){ o=objects[i]; if(o.type==='svg') paintSvgStamp(tctx,o); }
       for(i=0;i<objects.length;i++){ o=objects[i]; if(o.type==='arrow') paintArrow(tctx,o); }
       for(i=0;i<objects.length;i++){ o=objects[i]; if(o.type==='text') paintText(tctx,o); }
       tctx.setTransform(1,0,0,1,0,0);
+      tctx.globalCompositeOperation='destination-over';               // fond parchemin glissé sous tout le dessin
+      tctx.fillStyle=PARCHMENT_COLOR; tctx.fillRect(0,0,tmp.width,tmp.height);
+      tctx.globalCompositeOperation='source-over';
       var link=document.createElement('a');
       link.download='donjon-osr.png'; link.href=tmp.toDataURL('image/png');
       document.body.appendChild(link); link.click(); document.body.removeChild(link);
